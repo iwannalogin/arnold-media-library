@@ -1,0 +1,14 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "msbuild",
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build",
+			"label": "Build: arnold-media-library.csproj",
+			"detail": "Build the arnold-media-library.csproj project using dotnet build"
+		}
+	]
+}
