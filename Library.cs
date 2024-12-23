@@ -6,15 +6,7 @@ namespace arnold;
 class Library {
     public static int Entry( string[] args ) {
         var libraryRouting = new List<CommandRouter>([
-            new CommandRouter(
-                Name: "fallback",
-                Description: "FAILS",
-                Handler: args => {
-                    Console.WriteLine("Use the --help flag for available commands.");
-                    return 0;
-                },
-                Aliases: Array.Empty<string>()
-            ),
+            CommandProcessor.FallbackRouter,
             new CommandRouter(
                 Name: "list",
                 Description: "List existing libraries",

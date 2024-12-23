@@ -33,4 +33,14 @@ public class CommandProcessor( IEnumerable<CommandRouter> CommandRouters, string
 
         return defaultPath(args.Skip(1).ToArray() );
     }
+
+    public static CommandRouter FallbackRouter = new CommandRouter(
+        Name: "fallback",
+        Description: "FAILS",
+        Handler: args => {
+            Console.WriteLine("Use the --help flag for available commands");
+            return 0;
+        },
+        Aliases: Array.Empty<string>()
+    );
 }
