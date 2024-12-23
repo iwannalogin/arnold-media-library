@@ -12,6 +12,7 @@ public class DataService : DbContext {
     public required DbSet<FileLibrary> Libraries { get; set; }
     public required DbSet<FileAttributeDefinition> AttributeDefinitions { get; set; }
     public required DbSet<FileAttribute> Attributes { get; set; }
+    public required DbSet<FileMonitor> Monitors { get; set; }
 
     protected string DbPath;
 
