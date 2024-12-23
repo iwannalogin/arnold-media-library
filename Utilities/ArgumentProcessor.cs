@@ -27,16 +27,22 @@ public class ArgumentProcessor( IEnumerable<ArgumentDefinition> ArgumentMap ) {
                 return HelpResult;
             }
 
+            var isKey = false;
             foreach( var def in ArgumentMap ) {
                 if( def.Aliases.Any( alias => alias.ToLower() == testArg ) ) {
                     if( def.Type == ArgumentType.Flag ) {
                         output.Add( def.Name, ["true"] );
                     } else {
                         argumentStack.Push( def );
+                        if( output.ContainsKey( def.Name ) == false ) {
+                            if( def.Type == ArgumentType.List ) output.Add(def.Name, new List<string>() );
+                            else if( def.Type == ArgumentType.Value ) output.Add( def.Name, default );
+                        }
                     }
+                    isKey = true;
                 }
-                continue;
             }
+            if( isKey ) continue;
 
             if( argumentStack.Any() == false ) continue;
 
