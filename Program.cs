@@ -15,6 +15,12 @@ var mainRouting = new List<CommandRouter>([
         Description: "Manage libraries",
         Handler: Library.Entry,
         Aliases: ["lib", "libs", "library", "libraries"]
+    ),
+    new CommandRouter(
+        Name: "monitor",
+        Description: "Manage file system monitors",
+        Handler: arnold.Monitor.Entry,
+        Aliases: ["mon" ,"monitor", "monitors"]
     )
 ]);
 
