@@ -14,11 +14,11 @@ public class DataService : DbContext {
     public required DbSet<FileAttribute> Attributes { get; set; }
     public required DbSet<FileMonitor> Monitors { get; set; }
 
-    protected string DbPath;
+    public string DbPath { get; private set; }
 
     public DataService() {
         var appData = Environment.SpecialFolder.LocalApplicationData;
-        var appDataPath = Environment.GetFolderPath(appData);
+        var appDataPath = Environment.GetFolderPath(appData, Environment.SpecialFolderOption.Create);
         DbPath = Path.Join( appDataPath, "Arnold Media Library", "database.db" );
     }
 

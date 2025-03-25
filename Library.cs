@@ -1,3 +1,4 @@
+using arnold.Models;
 using arnold.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,11 +32,169 @@ class Library {
                 Description: "Scan folders to update files in library",
                 Handler: UpdateLibrary,
                 Aliases: ["update", "scan"]
+            ),
+            new CommandRouter(
+                Name: "find",
+                Description: "Find files by tag",
+                Handler: SearchLibrary,
+                Aliases: ["find", "search"]
+            ),
+            new CommandRouter(
+                Name: "clean",
+                Description: "Clean missing files from library",
+                Handler: SearchLibrary,
+                Aliases: ["clean", "purge"]
+            ),
+            new CommandRouter(
+                Name: "info",
+                Description: "Get library info",
+                Handler: DescribeLibrary,
+                Aliases: ["info", "description"]
             )
         ]);
 
         var processor = new CommandProcessor( libraryRouting, "HELP");
         return processor.Execute(args);
+    }
+
+    public static int DescribeLibrary( string[] args ) {
+        var arguments = ArgumentProcessor.Process(
+            args: args,
+            argumentMap: [
+                new ArgumentDefinition(
+                    Name: "Library",
+                    Description: "Name of library to update",
+                    Type: ArgumentType.Value,
+                    Aliases: ["-l", "--l", "-lib", "--lib", "-library", "--library" ]
+                )
+            ]
+        );
+
+        var libraryName = arguments["Library"]?.FirstOrDefault();
+        if( string.IsNullOrWhiteSpace(libraryName) ) {
+            Console.WriteLine("No library provided");
+            return -1;
+        }
+
+        var dataService = Provider.GetRequiredService<DataService>();
+        var library = dataService.Libraries
+            .Include( lib => lib.Monitors )
+            .FirstOrDefault( lib => lib.Name.ToLower() == libraryName.ToLower() );
+
+        if( library is null ) {
+            Console.WriteLine($"Failed to find library {libraryName}");
+            return -1;
+        }
+
+        Console.WriteLine($"Library: {library.Name}");
+        Console.WriteLine( $"Files: {dataService.Metadata.Where( info => info.LibraryId == library.Id ).Count()}");
+        Console.WriteLine("Description:");
+        foreach( var line in library.Description.Split( Environment.NewLine ) ) {
+            Console.WriteLine($">> {line}");
+        }
+
+        if( library.Monitors.Count() > 0 ) Console.WriteLine("Monitors:");
+        foreach( var monitor in library.Monitors ) {
+            Console.WriteLine($">> {monitor.Name}");
+            Console.WriteLine($">>>> Directory: {monitor.Directory}");
+            Console.WriteLine($">>>> Recursive: {monitor.Recurse}");
+            Console.WriteLine($">>>> Rule: {monitor.Rule}");
+            Console.WriteLine($">>>> Style: {(monitor.IsInclusionRule ? "Inclusion" : "Exclusion")}");
+        }
+        return 0;
+    }
+
+    public static int CleanLibrary( string[] args ) {
+        var arguments = ArgumentProcessor.Process(
+            args: args,
+            argumentMap: [
+                new ArgumentDefinition(
+                    Name: "Library",
+                    Description: "Name of library to update",
+                    Type: ArgumentType.Value,
+                    Aliases: ["-l", "--l", "-lib", "--lib", "-library", "--library" ]
+                )
+            ]
+        );
+
+        var libraryName = arguments["Library"]?.FirstOrDefault();
+        if( string.IsNullOrWhiteSpace(libraryName) ) {
+            Console.WriteLine("No library provided");
+            return -1;
+        }
+
+        var dataService = Provider.GetRequiredService<DataService>();
+        var library = dataService.Libraries.FirstOrDefault( lib => lib.Name.ToLower() == libraryName.ToLower() );
+        if( library is null ) {
+            Console.WriteLine($"Failed to find library {libraryName}");
+            return -1;
+        }
+
+        var toDelete = new Queue<FileMetadata>();
+        foreach( var metadata in dataService.Metadata.Where( info => info.LibraryId == library.Id ) ) {
+            if( !File.Exists( metadata.Name ) ) {
+                toDelete.Enqueue( metadata );
+            }
+        }
+
+        dataService.RemoveRange( toDelete );
+        dataService.SaveChanges();
+        return 0;
+    }
+
+    public static int SearchLibrary( string[] args ) {
+        var arguments = ArgumentProcessor.Process(
+            args: args,
+            argumentMap: [
+                new ArgumentDefinition(
+                    Name: "Library",
+                    Description: "Name of library to update",
+                    Type: ArgumentType.Value,
+                    Aliases: ["-l", "--l", "-lib", "--lib", "-library", "--library" ]
+                ),
+                new ArgumentDefinition(
+                    Name: "Tags",
+                    Description: "Tags to apply",
+                    Type: ArgumentType.List,
+                    Aliases: ["-t", "--t", "-tag", "--tag", "-tags", "--tags"]
+                ),
+                new ArgumentDefinition(
+                    Name: "And",
+                    Description: "Search for files with all tags",
+                    Type: ArgumentType.Flag,
+                    Aliases: ["-and", "--and"]
+                )
+            ]
+        );
+
+        var libraryName = arguments.GetValueOrDefault("Library")?.FirstOrDefault();
+        var tagList = arguments.GetValueOrDefault("Tags")?.Select( tag => tag.ToLower() );
+        var needsAllTags = arguments.ContainsKey("And");
+
+
+        var dataService = Provider.GetRequiredService<DataService>();
+        var library = dataService.Libraries.FirstOrDefault( lib => lib.Name.ToLower() == libraryName.ToLower() );
+
+        IEnumerable<FileMetadata> matchingFiles;
+
+        if( needsAllTags ) {
+            matchingFiles = dataService.Metadata
+                .Include( info => info.Tags )
+                .Where( info => tagList
+                    .All( tag => info.Tags.
+                        Any( tagDef => tagDef.Tag.ToLower() == tag ) ) );
+        } else {
+            matchingFiles = dataService.Metadata
+                .Include( info => info.Tags )
+                .Where( info => tagList
+                    .Any( tag => info.Tags.
+                        Any( tagDef => tagDef.Tag.ToLower() == tag ) ) );
+        }
+
+        foreach( var info in matchingFiles ) {
+            Console.WriteLine( info.Name );
+        }   
+        return 0;
     }
 
     public static int UpdateLibrary( string[] args ) {

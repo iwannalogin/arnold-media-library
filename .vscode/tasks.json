@@ -12,20 +12,28 @@
             "problemMatcher": "$msCompile"
         },
 		{
-			"type": "msbuild",
-			"problemMatcher": [
-				"$msCompile"
-			],
-			"group": "build",
-			"label": "Build: arnold-media-library.csproj",
-			"detail": "Build the arnold-media-library.csproj project using dotnet build"
-		},
-		{
 			"type": "dotnet",
 			"task": "build",
 			"group": "build",
 			"problemMatcher": [],
 			"label": "dotnet: build"
-		}
+		},{
+            "label": "publish",
+            "command": "dotnet",
+            "type": "shell",
+            "args": [
+                "publish",
+                "arnold-media-library.csproj",
+                "/p:PublishProfile=Local",
+				"/p:PublishSingleFile=true",
+                "-o", "~/Utilities",
+                "-f", "net8.0"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        }
 	]
 }

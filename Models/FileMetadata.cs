@@ -10,8 +10,16 @@ public class FileMetadata {
     public string Name { get; set; } = string.Empty;
     public string Label { get; set; } = string.Empty;
 
-    public virtual FileTag[] Tags { get; set; } = Array.Empty<FileTag>();
-    public virtual FileAttribute[] Attributes { get; set; } = Array.Empty<FileAttribute>();
+    public virtual List<FileTag> Tags { get; set; } = new List<FileTag>();
+    public virtual List<FileAttribute> Attributes { get; set; } = new List<FileAttribute>();
+
+    public bool ContainsTag( string tag ) {
+        var testTag = tag.ToLower();
+        foreach( var existingTag in Tags ) {
+            if( existingTag.Tag.ToLower() == testTag ) return true;            
+        }
+        return false;
+    }
 
     [ModelBuilder]
     private static void OnModelCreating( ModelBuilder builder ) {

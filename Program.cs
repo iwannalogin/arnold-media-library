@@ -21,6 +21,17 @@ var mainRouting = new List<CommandRouter>([
         Description: "Manage file system monitors",
         Handler: arnold.Monitor.Entry,
         Aliases: ["mon" ,"monitor", "monitors"]
+    ),
+    new CommandRouter(
+        Name: "tag",
+        Description: "Manage file tags",
+        Handler: arnold.Tag.Entry,
+        Aliases: ["tag", "tags"]
+    ), new CommandRouter(
+        Name: "config",
+        Description: "Manage configuration",
+        Handler: arnold.Configure.Entry,
+        Aliases: ["config", "configure"]
     )
 ]);
 

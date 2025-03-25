@@ -62,4 +62,57 @@ public class ArgumentProcessor( IEnumerable<ArgumentDefinition> ArgumentMap ) {
         var processor = new ArgumentProcessor( argumentMap );
         return processor.Execute(args);
     }
+
+    //public static T Process<T>( string[] args, IEnumerable<ArgumentDefinition> argumentMap ) {
+    //    var asDictionary = new ArgumentProcessor( argumentMap ).Execute( args );
+    //    var output = default(T);
+    //    var outputType = typeof(T);
+//
+    //    foreach( var kvp in asDictionary ) {
+    //        var argumentDef = argumentMap.First( def => def.Name.ToLower() == kvp.Key.ToLower() );
+//
+    //        object? outputValue = argumentDef.Type switch {
+    //            ArgumentType.Flag => true,
+    //            ArgumentType.List => kvp.Value,
+    //            ArgumentType.Value => kvp.Value?.FirstOrDefault(),
+    //            _ => null
+    //        };
+//
+    //        var outputProp = outputType
+    //                            .GetProperties()
+    //                            .FirstOrDefault( prop => prop.Name.ToLower() == kvp.Key.ToLower() );
+//
+    //        var outputField = (outputProp is not null) ? null
+    //                            : outputType
+    //                                .GetFields()
+    //                                .FirstOrDefault( field => field.Name.ToLower() == kvp.Key.ToLower() );
+//
+    //        Action<object>? setProperty = null;
+    //        Type? propertyType = null;
+    //        if( outputProp is not null ) {
+    //            setProperty = val => outputProp.SetValue( output, val );
+    //            propertyType = outputProp.PropertyType;
+    //        } else if( outputField is not null ) {
+    //            setProperty = val => outputField.SetValue(output, val );
+    //            propertyType = outputField.FieldType;
+    //        }
+//
+    //        if( setProperty is null || propertyType is null ) {
+    //            continue;
+    //        }
+//
+    //        setProperty( propertyType switch {
+    //            System.String => outputValue is string ? outputValue : outputValue?.ToString(),
+    //        } );
+    //    }
+    //}
+
+    //protected static object? ConvertToType( object? value, Type targetType ) {
+    //    if( value is null ) return Activator.CreateInstance(targetType);
+    //    else if( targetType == typeof(string) ) return value.ToString();
+    //    else if( targetType == typeof( IEnumerable<string> ) ) {
+    //        if( value.GetType() == typeof(List<string>) ) return value;
+    //        else if( value.GetType() == typeof(string) ) return new string[] {(string)value};
+    //    } 
+    //}
 }
