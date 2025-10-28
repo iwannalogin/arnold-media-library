@@ -23,11 +23,11 @@
             "type": "shell",
             "args": [
                 "publish",
-                "arnold-media-library.csproj",
-                "/p:PublishProfile=Local",
-				"/p:PublishSingleFile=true",
-                "-o", "~/Utilities",
-                "-f", "net8.0"
+                "cli/arnold.csproj",
+                "-c", "Release",
+				"-p:PublishSingleFile=true",
+                "-p:DebugSymbols=false",
+                "-o", "~/Utilities"
             ],
             "group": "build",
             "presentation": {

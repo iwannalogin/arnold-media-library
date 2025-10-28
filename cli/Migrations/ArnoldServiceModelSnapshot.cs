@@ -8,8 +8,8 @@ using arnold.Services;
 
 namespace arnold.Migrations
 {
-    [DbContext(typeof(DataService))]
-    partial class DataServiceModelSnapshot : ModelSnapshot
+    [DbContext(typeof(ArnoldService))]
+    partial class ArnoldServiceModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {

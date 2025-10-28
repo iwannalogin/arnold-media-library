@@ -1,6 +1,6 @@
 using arnold.Services;
+using arnold.Utilities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
 
 namespace arnold;
 
@@ -72,7 +72,7 @@ class Tag {
                 fileName = Console.ReadLine();
                 return String.IsNullOrWhiteSpace(fileName) == false;
             };
-            files = new List<string>();
+            files = [];
             while( readLine(out var file) ) {
                 (files as List<string>)!.Add(file!);
             }
@@ -82,7 +82,7 @@ class Tag {
                 tag = Console.ReadLine();
                 return String.IsNullOrWhiteSpace(tag) == false;
             };
-            tagList = new List<string>();
+            tagList = [];
             while( readLine(out var tag) ) {
                 (tagList as List<string>)!.Add(tag!);
             }
@@ -90,10 +90,10 @@ class Tag {
 
         //Do checks and interactive pass here.
 
-        var dataService = Provider.GetRequiredService<DataService>();
-        var library = dataService.Libraries.FirstOrDefault( lib => lib.Name.ToLower() == libraryName.ToLower() );
+        var dataService = Provider.GetRequiredService<ArnoldService>();
+        var library = dataService.Libraries.First( lib => lib.Name.Equals(libraryName, StringComparison.CurrentCultureIgnoreCase));
         foreach( var fileName in files.Select( f => f.Trim('\"') ) ) {
-            var metadata = dataService.Metadata.Include( info => info.Tags ).FirstOrDefault( info => info.LibraryId == library.Id && info.Name.ToLower() == fileName.ToLower() );
+            var metadata = dataService.Metadata.Include( info => info.Tags ).FirstOrDefault( info => info.LibraryId == library.Id && info.Name.Equals(fileName, StringComparison.CurrentCultureIgnoreCase));
             if( metadata is null ) continue;
 
             var toAdd = tagList
@@ -119,18 +119,21 @@ class Tag {
                     Name: "Directory",
                     Description: "Directory of files to tag",
                     Type: ArgumentType.Value,
+                    Required: true,
                     Aliases: ["-d", "--d", "-dir", "--dir", "-directory", "--directory"]
                 ),
                 new ArgumentDefinition(
                     Name: "Library",
                     Description: "Library to tag",
                     Type: ArgumentType.Value,
+                    Required: true,
                     Aliases: ["-l", "--l", "-lib", "--lib", "-library", "--library"]
                 ),
                 new ArgumentDefinition(
                     Name: "Tags",
                     Description: "Tags to apply",
                     Type: ArgumentType.List,
+                    Required: true,
                     Aliases: ["-t", "--t", "-tag", "--tag", "-tags", "--tags"]
                 ),
                 new ArgumentDefinition(
@@ -148,18 +151,18 @@ class Tag {
             ]
         );
 
-        var directory = arguments.GetValueOrDefault("Directory")?.FirstOrDefault();
-        var libraryName = arguments.GetValueOrDefault("Library")?.FirstOrDefault();
+        var directory = arguments["Directory"]!.First();
+        var libraryName = arguments["Library"]!.First();
         var isInteractive = arguments.ContainsKey("Interactive");
         var recurse = arguments.ContainsKey("Recurse");
-        var tagList = arguments.GetValueOrDefault("Tags");
+        var tagList = arguments["Tags"]!;
 
         //Do checks and interactive pass here.
 
-        var dataService = Provider.GetRequiredService<DataService>();
-        var library = dataService.Libraries.FirstOrDefault( lib => lib.Name.ToLower() == libraryName.ToLower() );
+        var dataService = Provider.GetRequiredService<ArnoldService>();
+        var library = dataService.Libraries.First( lib => lib.Name.Equals(libraryName, StringComparison.CurrentCultureIgnoreCase));
         foreach( var fileName in Directory.EnumerateFiles( directory, "*", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly ) ) {
-            var metadata = dataService.Metadata.Include( info => info.Tags ).FirstOrDefault( info => info.LibraryId == library.Id && info.Name.ToLower() == fileName.ToLower() );
+            var metadata = dataService.Metadata.Include( info => info.Tags ).FirstOrDefault( info => info.LibraryId == library.Id && info.Name.Equals(fileName, StringComparison.CurrentCultureIgnoreCase));
             if( metadata is null ) continue;
 
             var toAdd = tagList

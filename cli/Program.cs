@@ -1,15 +1,8 @@
 ﻿using arnold;
+using arnold.Utilities;
 
 var mainRouting = new List<CommandRouter>([
-    new CommandRouter(
-        Name: "fallback",
-        Description: "FAILS",
-        Handler: args => {
-            Console.WriteLine("Welcome to Arnold's Media Library. Use the --help flag for instructions.");
-            return 0;
-        },
-        Aliases: Array.Empty<string>()
-    ),
+    CommandProcessor.FallbackRouter,
     new CommandRouter(
         Name: "library",
         Description: "Manage libraries",
@@ -25,22 +18,16 @@ var mainRouting = new List<CommandRouter>([
     new CommandRouter(
         Name: "tag",
         Description: "Manage file tags",
-        Handler: arnold.Tag.Entry,
+        Handler: Tag.Entry,
         Aliases: ["tag", "tags"]
-    ), new CommandRouter(
-        Name: "config",
-        Description: "Manage configuration",
-        Handler: arnold.Configure.Entry,
-        Aliases: ["config", "configure"]
-    )
+    ), Configure.EntryRouter
 ]);
 
-var helpText = @$"
-arnold-library {{command}}
+var processor = new CommandProcessor(
+    CommandRouters: mainRouting,
+    HelpText: CommandProcessor.GenerateHelpText(
+        command: [],
+        description: "A general purpose library management application",
+        routings: mainRouting ) );
 
-Commands:
-  library: Create, remove, or manage libraries
-".Trim();
-
-var processor = new CommandProcessor( mainRouting, helpText );
 return processor.Execute( args );

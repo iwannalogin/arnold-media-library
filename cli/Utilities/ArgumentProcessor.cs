@@ -1,10 +1,12 @@
+using arnold.Utilities;
+
 namespace System;
 
 public enum ArgumentType { Flag, List, Value }
-public readonly record struct ArgumentDefinition( string Name, string Description, ArgumentType Type, params string[] Aliases );
+public readonly record struct ArgumentDefinition( string Name, string Description, ArgumentType Type, bool Required = false, IEnumerable<string>? Aliases = null );
 
 public class ArgumentProcessor( IEnumerable<ArgumentDefinition> ArgumentMap ) {
-    public static readonly Dictionary<string, IEnumerable<string>?> HelpResult = new Dictionary<string, IEnumerable<string>?>();
+    public static readonly Dictionary<string, IEnumerable<string>?> HelpResult = [];
 
     public Dictionary<string,IEnumerable<string>?> Execute( string[] args ) {
         var argumentStack = new Stack<ArgumentDefinition>();
@@ -14,7 +16,7 @@ public class ArgumentProcessor( IEnumerable<ArgumentDefinition> ArgumentMap ) {
         }
         var output = new Dictionary<string, IEnumerable<string>?>();
         foreach( var def in argumentStack ) {
-            if( def.Type == ArgumentType.List ) output.Add( def.Name, new List<string>() );
+            if( def.Type == ArgumentType.List ) output.Add( def.Name, [] );
             else if( def.Type == ArgumentType.Value ) output.Add( def.Name, default );
         }
 
@@ -29,13 +31,13 @@ public class ArgumentProcessor( IEnumerable<ArgumentDefinition> ArgumentMap ) {
 
             var isKey = false;
             foreach( var def in ArgumentMap ) {
-                if( def.Aliases.Any( alias => alias.ToLower() == testArg ) ) {
+                if( def.Aliases is not null && def.Aliases.Any( alias => alias.Equals(testArg, StringComparison.CurrentCultureIgnoreCase)) ) {
                     if( def.Type == ArgumentType.Flag ) {
                         output.Add( def.Name, ["true"] );
                     } else {
                         argumentStack.Push( def );
                         if( output.ContainsKey( def.Name ) == false ) {
-                            if( def.Type == ArgumentType.List ) output.Add(def.Name, new List<string>() );
+                            if( def.Type == ArgumentType.List ) output.Add(def.Name, [] );
                             else if( def.Type == ArgumentType.Value ) output.Add( def.Name, default );
                         }
                     }
@@ -44,7 +46,7 @@ public class ArgumentProcessor( IEnumerable<ArgumentDefinition> ArgumentMap ) {
             }
             if( isKey ) continue;
 
-            if( argumentStack.Any() == false ) continue;
+            if( argumentStack.Count == 0 ) continue;
 
             var activeArgument = argumentStack.Peek();
             if( activeArgument.Type == ArgumentType.Value ) {
@@ -55,12 +57,19 @@ public class ArgumentProcessor( IEnumerable<ArgumentDefinition> ArgumentMap ) {
             }
         }
 
-        return output;
+        return output!;
     }
 
     public static Dictionary<string,IEnumerable<string>?> Process( string[] args, IEnumerable<ArgumentDefinition> argumentMap ) {
         var processor = new ArgumentProcessor( argumentMap );
-        return processor.Execute(args);
+        var arguments = processor.Execute(args);
+
+        var missingArguments = argumentMap
+            .Where( arg => arg.Required && !arguments.ContainsKey(arg.Name) )
+            .Select( arg => arg.Name );
+
+        if( missingArguments.Any() ) throw new MissingArgumentsException(missingArguments);
+        return arguments!;
     }
 
     //public static T Process<T>( string[] args, IEnumerable<ArgumentDefinition> argumentMap ) {

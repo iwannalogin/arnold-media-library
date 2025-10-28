@@ -1,10 +1,11 @@
+using arnold.Managers;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace arnold.Services;
 
-class Provider {
-    protected static ServiceCollection collection;
-    protected static ServiceProvider? _instance;
+public class Provider {
+    private static readonly ServiceCollection collection;
+    private static ServiceProvider? _instance;
     public static ServiceProvider Instance {
         get {
             if( _instance is null ) {
@@ -16,7 +17,8 @@ class Provider {
 
     static Provider() {
         collection = new ServiceCollection();
-        collection.AddDbContext<DataService>();
+        collection.AddDbContext<ArnoldService>();
+        collection.AddTransient<LibraryManager>();
     }
 
     public static T? GetService<T>() where T : class

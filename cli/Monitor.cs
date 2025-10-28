@@ -1,4 +1,5 @@
 using arnold.Services;
+using arnold.Utilities;
 using Microsoft.EntityFrameworkCore;
 
 namespace arnold;
@@ -42,9 +43,9 @@ class Monitor {
             return -1;
         }
 
-        var dataService = Provider.GetRequiredService<DataService>();
+        var dataService = Provider.GetRequiredService<ArnoldService>();
         var library = dataService.Libraries
-            .Where( lib => lib.Name.ToLower() == libraryName.ToLower() )
+            .Where( lib => lib.Name.Equals(libraryName, StringComparison.CurrentCultureIgnoreCase))
             .Include( lib => lib.Monitors )
             .FirstOrDefault();
 
@@ -146,8 +147,8 @@ class Monitor {
             return -1;
         }
 
-        var dataService = Provider.GetRequiredService<DataService>();
-        var library = dataService.Libraries.FirstOrDefault( lib => lib.Name.ToLower() == libraryName.ToLower() );
+        var dataService = Provider.GetRequiredService<ArnoldService>();
+        var library = dataService.Libraries.FirstOrDefault( lib => lib.Name.Equals(libraryName, StringComparison.CurrentCultureIgnoreCase));
 
         if( library is null ) {
             Console.WriteLine( $"Failed to find library named {libraryName},");

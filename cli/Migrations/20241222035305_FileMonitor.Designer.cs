@@ -9,7 +9,7 @@ using arnold.Services;
 
 namespace arnold.Migrations
 {
-    [DbContext(typeof(DataService))]
+    [DbContext(typeof(ArnoldService))]
     [Migration("20241222035305_FileMonitor")]
     partial class FileMonitor
     {

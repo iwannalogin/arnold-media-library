@@ -1,5 +1,7 @@
+using arnold.Managers;
 using arnold.Models;
 using arnold.Services;
+using arnold.Utilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -65,6 +67,7 @@ class Library {
                     Name: "Library",
                     Description: "Name of library to update",
                     Type: ArgumentType.Value,
+                    Required: true,
                     Aliases: ["-l", "--l", "-lib", "--lib", "-library", "--library" ]
                 )
             ]
@@ -76,10 +79,10 @@ class Library {
             return -1;
         }
 
-        var dataService = Provider.GetRequiredService<DataService>();
+        var dataService = Provider.GetRequiredService<ArnoldService>();
         var library = dataService.Libraries
             .Include( lib => lib.Monitors )
-            .FirstOrDefault( lib => lib.Name.ToLower() == libraryName.ToLower() );
+            .FirstOrDefault( lib => lib.Name.Equals(libraryName, StringComparison.CurrentCultureIgnoreCase));
 
         if( library is null ) {
             Console.WriteLine($"Failed to find library {libraryName}");
@@ -123,8 +126,8 @@ class Library {
             return -1;
         }
 
-        var dataService = Provider.GetRequiredService<DataService>();
-        var library = dataService.Libraries.FirstOrDefault( lib => lib.Name.ToLower() == libraryName.ToLower() );
+        var dataService = Provider.GetRequiredService<ArnoldService>();
+        var library = dataService.Libraries.FirstOrDefault( lib => lib.Name.Equals(libraryName, StringComparison.CurrentCultureIgnoreCase));
         if( library is null ) {
             Console.WriteLine($"Failed to find library {libraryName}");
             return -1;
@@ -150,12 +153,14 @@ class Library {
                     Name: "Library",
                     Description: "Name of library to update",
                     Type: ArgumentType.Value,
+                    Required: true,
                     Aliases: ["-l", "--l", "-lib", "--lib", "-library", "--library" ]
                 ),
                 new ArgumentDefinition(
                     Name: "Tags",
                     Description: "Tags to apply",
                     Type: ArgumentType.List,
+                    Required: true,
                     Aliases: ["-t", "--t", "-tag", "--tag", "-tags", "--tags"]
                 ),
                 new ArgumentDefinition(
@@ -167,13 +172,13 @@ class Library {
             ]
         );
 
-        var libraryName = arguments.GetValueOrDefault("Library")?.FirstOrDefault();
-        var tagList = arguments.GetValueOrDefault("Tags")?.Select( tag => tag.ToLower() );
+        var libraryName = arguments["Library"]!.First();
+        var tagList = arguments["Tags"]!.Select( tag => tag.ToLower() );
         var needsAllTags = arguments.ContainsKey("And");
 
 
-        var dataService = Provider.GetRequiredService<DataService>();
-        var library = dataService.Libraries.FirstOrDefault( lib => lib.Name.ToLower() == libraryName.ToLower() );
+        var dataService = Provider.GetRequiredService<ArnoldService>();
+        var library = dataService.Libraries.FirstOrDefault( lib => lib.Name.Equals(libraryName, StringComparison.CurrentCultureIgnoreCase));
 
         IEnumerable<FileMetadata> matchingFiles;
 
@@ -182,13 +187,13 @@ class Library {
                 .Include( info => info.Tags )
                 .Where( info => tagList
                     .All( tag => info.Tags.
-                        Any( tagDef => tagDef.Tag.ToLower() == tag ) ) );
+                        Any( tagDef => tagDef.Tag.Equals(tag, StringComparison.CurrentCultureIgnoreCase)) ) );
         } else {
             matchingFiles = dataService.Metadata
                 .Include( info => info.Tags )
                 .Where( info => tagList
                     .Any( tag => info.Tags.
-                        Any( tagDef => tagDef.Tag.ToLower() == tag ) ) );
+                        Any( tagDef => tagDef.Tag.Equals(tag, StringComparison.CurrentCultureIgnoreCase)) ) );
         }
 
         foreach( var info in matchingFiles ) {
@@ -216,8 +221,8 @@ class Library {
             return -1;
         }
 
-        var dataService = Provider.GetRequiredService<DataService>();
-        var library = dataService.Libraries.Include( lib => lib.Monitors ).FirstOrDefault( l => l.Name.ToLower() == libraryName.ToLower() );
+        var dataService = Provider.GetRequiredService<ArnoldService>();
+        var library = dataService.Libraries.Include( lib => lib.Monitors ).FirstOrDefault( l => l.Name.Equals(libraryName, StringComparison.CurrentCultureIgnoreCase));
         if( library is null ) {
             Console.WriteLine($"Failed to find library ${libraryName}");
             return -1;
@@ -232,7 +237,7 @@ class Library {
             foreach( var file in Directory.EnumerateFiles( directory, "*", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly ) ) {
                 var shouldAdd = monitorGroup.Any( monitor => monitor.IsMatch( file ) );
 
-                if( shouldAdd && !dataService.Metadata.Any( info => info.LibraryId == library.Id && info.Name.ToLower() == file.ToLower() )) {
+                if( shouldAdd && !dataService.Metadata.Any( info => info.LibraryId == library.Id && info.Name.Equals(file, StringComparison.CurrentCultureIgnoreCase))) {
                     dataService.Metadata.Add( new Models.FileMetadata() {
                         Name = file,
                         Label = Path.GetFileName( file ),
@@ -261,8 +266,8 @@ class Library {
         if( !arguments.ContainsKey("Name") ) return 0;
         var name = arguments["Name"]!.First();
 
-        var dataService = Provider.GetRequiredService<DataService>();
-        var library = dataService.Libraries.FirstOrDefault( l => l.Name.ToLower() == name.ToLower() );
+        var dataService = Provider.GetRequiredService<ArnoldService>();
+        var library = dataService.Libraries.FirstOrDefault( l => l.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
         if( library is null ) {
             Console.WriteLine($"Failed to find library ${name}");
             return -1;
@@ -325,7 +330,7 @@ class Library {
             return 0;
         }
 
-        var dataService = Provider.GetRequiredService<DataService>();
+        var dataService = Provider.GetRequiredService<ArnoldService>();
         dataService.Libraries.Add( new Models.FileLibrary() {
             Name = libraryName,
             Description = libraryDesc
@@ -364,24 +369,24 @@ class Library {
                 )
         ]);
 
-        var dataService = Provider.GetRequiredService<DataService>();
+        var libraryManager = Provider.GetRequiredService<LibraryManager>();
 
-        if( dataService.Libraries.Any() == false ) {
+        if( !libraryManager.ListLibraries().Any() ) {
             Console.WriteLine( "No libraries have been created.");
             return 0;
         }
 
-        foreach( var library in dataService.Libraries ) {
+        foreach( var library in libraryManager.ListLibraries() ) {
             Console.WriteLine( library.Name );
             if( arguments.ContainsKey("Descriptions") || arguments.ContainsKey("Full") ) {
                 foreach( var descriptionLine in library.Description.Split("\r\n") ) {
-                    //TODO: Properly consider buffwer weidth
+                    //TODO: Properly consider buffer width
                     Console.WriteLine( ">> " + descriptionLine );
                 }
             }
 
             if( arguments.ContainsKey("Count") || arguments.ContainsKey("Full") ) {
-                Console.WriteLine(">> " + dataService.Metadata.Where( info => info.LibraryId == library.Id ).Count() );
+                Console.WriteLine(">> " + libraryManager.ListMetadata(library).Count() );
             }
         }
         return 0;

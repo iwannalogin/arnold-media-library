@@ -6,7 +6,7 @@ using System.Text;
 
 namespace arnold.Services;
 
-public class DataService : DbContext {
+public class ArnoldService : DbContext {
     public required DbSet<FileMetadata> Metadata { get; set; }
     public required DbSet<FileTag> Tags { get; set; }
     public required DbSet<FileLibrary> Libraries { get; set; }
@@ -16,7 +16,7 @@ public class DataService : DbContext {
 
     public string DbPath { get; private set; }
 
-    public DataService() {
+    public ArnoldService() {
         var appData = Environment.SpecialFolder.LocalApplicationData;
         var appDataPath = Environment.GetFolderPath(appData, Environment.SpecialFolderOption.Create);
         DbPath = Path.Join( appDataPath, "Arnold Media Library", "database.db" );
@@ -31,7 +31,7 @@ public class DataService : DbContext {
     }
 
     protected override void OnModelCreating( ModelBuilder builder ) {
-        var thisAssembly = System.Reflection.Assembly.GetAssembly(typeof(DataService))!;
+        var thisAssembly = System.Reflection.Assembly.GetAssembly(typeof(ArnoldService))!;
 
         foreach( var type in thisAssembly.GetTypes() )
         {
