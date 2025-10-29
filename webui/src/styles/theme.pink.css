@@ -1,0 +1,7 @@
+:root[theme="pink"] {
+    --background: #F0A;
+    --foreground: #703;
+
+    --control-background: #0006;
+    --control-foreground: whitesmoke;
+}

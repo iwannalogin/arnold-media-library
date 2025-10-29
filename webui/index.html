@@ -1,13 +1,24 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" theme="pink">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>arnold-webui</title>
+    <title>arnold media library</title>
   </head>
   <body>
-    <site-header></site-header>
+    <div id="SiteHeader">
+      <button id="SiteHeader.Logo" message="go" message-parameter="~">arnold</button>
+      <select id="SiteHeader.Library" message="load-library" message-parameter=".value">
+        <option>TV</option>
+        <option>Movies</option>
+        <option>Cartoons</option>
+        <option>Comics</option>
+        <option>Manga</option>
+      </select>
+    </div>
+
+    <div id="StatusBar"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -1,4 +1,4 @@
-import { html } from 'wc-lib';
+import { html, WCFormElement } from 'wc-lib'
 
 const template = html``;
 

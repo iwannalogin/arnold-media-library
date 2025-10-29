@@ -1,0 +1,41 @@
+button {
+    border: 0;
+    background: transparent;
+}
+
+#SiteHeader {
+    border: 0px 0px 0px 1px solid white;
+}
+
+#SiteHeader > * {
+    align-self: center;
+    justify-self: stretch;
+
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+
+    padding: 0.125rem 0.75rem 0.125rem 0.75rem;
+
+    color: var(--control-foreground);
+    font: 1.75rem bold serif;
+    text-align: center;
+    text-transform: lowercase;
+}
+
+#SiteHeader > *:hover {
+    background-color: var(--control-background);
+}
+
+#SiteHeader\.Logo {
+    cursor: pointer;
+}
+
+#SiteHeader\.Library > * {
+    border: 1px solid lime;
+    border-radius: 2rem;
+    color: var(--control-foreground);
+}
+
+#SiteHeader\.Library {
+    appearance: none;
+}
