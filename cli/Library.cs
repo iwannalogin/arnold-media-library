@@ -59,7 +59,7 @@ class Library {
         return processor.Execute(args);
     }
 
-    public static int DescribeLibrary( string[] args ) {
+    public static void DescribeLibrary( string[] args ) {
         var arguments = ArgumentProcessor.Process(
             args: args,
             argumentMap: [
@@ -76,7 +76,7 @@ class Library {
         var libraryName = arguments["Library"]?.FirstOrDefault();
         if( string.IsNullOrWhiteSpace(libraryName) ) {
             Console.WriteLine("No library provided");
-            return -1;
+            return; //TODO: Throw exception here
         }
 
         var dataService = Provider.GetRequiredService<ArnoldService>();
@@ -86,7 +86,7 @@ class Library {
 
         if( library is null ) {
             Console.WriteLine($"Failed to find library {libraryName}");
-            return -1;
+            return; //TODO: Throw exception here
         }
 
         Console.WriteLine($"Library: {library.Name}");
@@ -104,10 +104,10 @@ class Library {
             Console.WriteLine($">>>> Rule: {monitor.Rule}");
             Console.WriteLine($">>>> Style: {(monitor.IsInclusionRule ? "Inclusion" : "Exclusion")}");
         }
-        return 0;
+        return;
     }
 
-    public static int CleanLibrary( string[] args ) {
+    public static void CleanLibrary( string[] args ) {
         var arguments = ArgumentProcessor.Process(
             args: args,
             argumentMap: [
@@ -123,14 +123,14 @@ class Library {
         var libraryName = arguments["Library"]?.FirstOrDefault();
         if( string.IsNullOrWhiteSpace(libraryName) ) {
             Console.WriteLine("No library provided");
-            return -1;
+            return;  //TODO: Throw exception here
         }
 
         var dataService = Provider.GetRequiredService<ArnoldService>();
         var library = dataService.Libraries.FirstOrDefault( lib => lib.Name.Equals(libraryName, StringComparison.CurrentCultureIgnoreCase));
         if( library is null ) {
             Console.WriteLine($"Failed to find library {libraryName}");
-            return -1;
+            return;  //TODO: Throw exception here
         }
 
         var toDelete = new Queue<FileMetadata>();
@@ -142,10 +142,10 @@ class Library {
 
         dataService.RemoveRange( toDelete );
         dataService.SaveChanges();
-        return 0;
+        return;
     }
 
-    public static int SearchLibrary( string[] args ) {
+    public static void SearchLibrary( string[] args ) {
         var arguments = ArgumentProcessor.Process(
             args: args,
             argumentMap: [
@@ -199,10 +199,10 @@ class Library {
         foreach( var info in matchingFiles ) {
             Console.WriteLine( info.Name );
         }   
-        return 0;
+        return;
     }
 
-    public static int UpdateLibrary( string[] args ) {
+    public static void UpdateLibrary( string[] args ) {
         var arguments = ArgumentProcessor.Process(
             args: args,
             argumentMap: [
@@ -218,14 +218,14 @@ class Library {
         var libraryName = arguments.GetValueOrDefault( "Library" )?.FirstOrDefault();
         if( libraryName is null ) {
             Console.WriteLine("No library name provided.");
-            return -1;
+            return; //TODO: Throw exception here
         }
 
         var dataService = Provider.GetRequiredService<ArnoldService>();
         var library = dataService.Libraries.Include( lib => lib.Monitors ).FirstOrDefault( l => l.Name.Equals(libraryName, StringComparison.CurrentCultureIgnoreCase));
         if( library is null ) {
             Console.WriteLine($"Failed to find library ${libraryName}");
-            return -1;
+            return; //TODO: Throw exception here
         }
 
         //TODO: Parallelize
@@ -247,10 +247,10 @@ class Library {
             }
             dataService.SaveChanges();
         }
-        return 0;
+        return;
     }
 
-    public static int DeleteLibrary( string[] args ) {
+    public static void DeleteLibrary( string[] args ) {
         var arguments = ArgumentProcessor.Process(
             args: args,
             argumentMap: [
@@ -263,24 +263,24 @@ class Library {
             ]
         );
 
-        if( !arguments.ContainsKey("Name") ) return 0;
+        if( !arguments.ContainsKey("Name") ) return; //TODO: Throw exception here
         var name = arguments["Name"]!.First();
 
         var dataService = Provider.GetRequiredService<ArnoldService>();
         var library = dataService.Libraries.FirstOrDefault( l => l.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
         if( library is null ) {
             Console.WriteLine($"Failed to find library ${name}");
-            return -1;
+            return; //TODO: Throw exception here
         }
 
         dataService.Libraries.Remove( library );
         dataService.SaveChanges();
 
         Console.WriteLine($"Deleted library {name}");
-        return 0;
+        return;
     }
 
-    public static int CreateLibrary( string[] args ) {
+    public static void CreateLibrary( string[] args ) {
         var arguments = ArgumentProcessor.Process(
             args: args,
             argumentMap: [
@@ -311,7 +311,7 @@ class Library {
                 var buffer = Console.ReadLine();
                 if( string.IsNullOrWhiteSpace(buffer) ) {
                     Console.WriteLine("No name provided.");
-                    return 0;
+                    return; //TODO: Throw exception here
                 } else arguments.Add("Name", [buffer]);
             }
 
@@ -327,7 +327,7 @@ class Library {
 
         if( libraryName is null || libraryDesc is null ) {
             Console.WriteLine("Not all required values provided.");
-            return 0;
+            return; //TODO: Throw exception here
         }
 
         var dataService = Provider.GetRequiredService<ArnoldService>();
@@ -336,10 +336,10 @@ class Library {
             Description = libraryDesc
         } );
         dataService.SaveChanges();
-        return 0;
+        return;
     }
 
-    public static int ListLibraries( string[] args ) {
+    public static void ListLibraries( string[] args ) {
         var arguments = ArgumentProcessor.Process(
             args: args, 
             argumentMap: [
@@ -373,7 +373,7 @@ class Library {
 
         if( !libraryManager.ListLibraries().Any() ) {
             Console.WriteLine( "No libraries have been created.");
-            return 0;
+            return; //TODO: Throw here
         }
 
         foreach( var library in libraryManager.ListLibraries() ) {
@@ -389,6 +389,6 @@ class Library {
                 Console.WriteLine(">> " + libraryManager.ListMetadata(library).Count() );
             }
         }
-        return 0;
+        return;
     }
 }

@@ -11,7 +11,7 @@ class Configure {
         Name: "config",
         Description: "Manage configuration",
         Aliases: ["config", "configure"],
-        Handler: static (args) => {
+        Handler: static (string[] args) => {
         var configureRouting = new List<CommandRouter>([
             CommandProcessor.FallbackRouter, InfoRouter, RetargetRouter
         ]);
@@ -26,7 +26,7 @@ class Configure {
         Name: "Info",
         Description: "Display configuration information",
         Aliases: [ "info" ],
-        Handler: static (args) => {
+        Handler: static (string[] args) => {
         var arguments = ArgumentProcessor.Process(
             args: args,
             argumentMap: [ new( "database", Description: "Get database path", ArgumentType.Flag ) ]
@@ -44,7 +44,7 @@ class Configure {
         Name: nameof(RetargetRouter).Replace("Router", ""),
         Description: "Retarget files in a library that were moved to a new location",
         Aliases: [ "retarget" ],
-        Handler: static (args) => {
+        Handler: static (string[] args) => {
             var arguments = ArgumentProcessor.Process( args, argumentMap: [
                 new( "library", "Library", ArgumentType.Value, true, ["-l", "lib", "library"] ),
                 new( "source", "Original root path", ArgumentType.Value, true, ["-s", "src", "source"] ),

@@ -1,6 +1,8 @@
 ﻿using arnold;
 using arnold.Utilities;
 
+
+
 var mainRouting = new List<CommandRouter>([
     CommandProcessor.FallbackRouter,
     new CommandRouter(
@@ -20,7 +22,9 @@ var mainRouting = new List<CommandRouter>([
         Description: "Manage file tags",
         Handler: Tag.Entry,
         Aliases: ["tag", "tags"]
-    ), Configure.EntryRouter
+    ),
+    Configure.EntryRouter,
+    Test.EntryRouter
 ]);
 
 var processor = new CommandProcessor(

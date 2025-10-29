@@ -3,7 +3,19 @@ using arnold.Utilities;
 namespace System;
 
 public enum ArgumentType { Flag, List, Value }
-public readonly record struct ArgumentDefinition( string Name, string Description, ArgumentType Type, bool Required = false, IEnumerable<string>? Aliases = null );
+public readonly record struct ArgumentDefinition(
+    string Name,
+    string Description,
+    ArgumentType Type,
+    bool Required = false,
+    IEnumerable<string>? Aliases = null ) {
+    public IEnumerable<string> TestAliases {
+        get => [ $"--{ToKebabCase(Name)}", .. Aliases ?? [] ];
+    }
+
+    public static string ToKebabCase( string value )
+        => value.ToLower().Replace(" ", "-");
+};
 
 public class ArgumentProcessor( IEnumerable<ArgumentDefinition> ArgumentMap ) {
     public static readonly Dictionary<string, IEnumerable<string>?> HelpResult = [];
@@ -31,13 +43,13 @@ public class ArgumentProcessor( IEnumerable<ArgumentDefinition> ArgumentMap ) {
 
             var isKey = false;
             foreach( var def in ArgumentMap ) {
-                if( def.Aliases is not null && def.Aliases.Any( alias => alias.Equals(testArg, StringComparison.CurrentCultureIgnoreCase)) ) {
+                if( def.TestAliases.Any( alias => alias.Equals(testArg, StringComparison.CurrentCultureIgnoreCase)) ) {
                     if( def.Type == ArgumentType.Flag ) {
                         output.Add( def.Name, ["true"] );
                     } else {
                         argumentStack.Push( def );
                         if( output.ContainsKey( def.Name ) == false ) {
-                            if( def.Type == ArgumentType.List ) output.Add(def.Name, [] );
+                            if( def.Type == ArgumentType.List ) output.Add(def.Name, new List<string>() );
                             else if( def.Type == ArgumentType.Value ) output.Add( def.Name, default );
                         }
                     }
