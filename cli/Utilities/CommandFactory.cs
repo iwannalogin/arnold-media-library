@@ -1,6 +1,7 @@
 using System.Collections;
 using System.CommandLine;
 using System.Reflection;
+using arnold.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace arnold.Utilities;
@@ -42,6 +43,15 @@ public class CommandFactory( IServiceProvider serviceProvider ) {
                 } );
             }
         }
+
+        //This should be part of some sort of global configuration
+        //service. Something that generates this list and maps them to an
+        //IConfiguration for consumption in transients.
+        cmd.Options.Add( new Option<string[]>( "--output-format", ["-of"] ) {
+            Description = "Output format [text|json]", //TODO: Generate
+            Arity = ArgumentArity.ZeroOrMore,
+            AllowMultipleArgumentsPerToken = true
+        } );
 
         foreach( var subrouting in definition.SubCommands ?? [] ) {
             cmd.Subcommands.Add( CreateCommand( subrouting ) );
@@ -102,7 +112,9 @@ public class CommandFactory( IServiceProvider serviceProvider ) {
                 if( missingParams.Count != 0) throw new MissingArgumentsException( missingParams );
 
                 var results = definition.Handler.Method.Invoke( definition.Handler.Target, [.. paramList ] );
-                if( results is not null ) OutputResults(results);
+
+                var outputFormat = parsedArgs.GetValue<string[]>("--output-format") ?? [];
+                if( results is not null ) OutputResults(results, outputFormat);
             } catch {
                 throw;
             } finally {
@@ -116,11 +128,22 @@ public class CommandFactory( IServiceProvider serviceProvider ) {
         } );
     }
 
-    public void OutputResults( object results ) {
+    public void OutputResults( object results, string[] outputFormat ) {
+        var format = outputFormat.Length == 0 ? "text" : outputFormat[0];
+
+        //We should probably write the failure to STD::Error
+        IFormattingService formattingService = 
+            serviceProvider.GetKeyedService<IFormattingService>( format )
+            ?? serviceProvider.GetRequiredKeyedService<IFormattingService>( "text" );
+
+        formattingService.Configure( outputFormat.Skip(1) );
+
         if( results.GetType().IsArray || results.GetType().IsAssignableTo( typeof( IEnumerable ) ) ) {
             foreach( var item in results as IEnumerable<object> ?? [] ) {
-                Console.WriteLine(item);
+                Console.WriteLine( formattingService.Print(item) );
             }
-        } else Console.WriteLine(results);
+        } else {
+            Console.WriteLine( formattingService.Print(results) );
+        }
     }
 }

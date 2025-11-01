@@ -8,6 +8,8 @@ var services = new ServiceCollection();
 services.AddDbContext<ArnoldService>();
 services.AddSingleton<LibraryManager>();
 
+services.AddFormattingServices();
+
 var commandFactory = new CommandFactory(services.BuildServiceProvider());
 var rootCommand = commandFactory.CreateCommand( RootRouting.RootHandler );
 
