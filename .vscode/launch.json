@@ -10,7 +10,7 @@
         "request": "launch",
         "preLaunchTask": "build",
         "program": "${workspaceFolder}/cli/bin/Debug/net10.0/arnold.dll",
-        "args": ["test", "args", "doug", "--numbers", "1", "2.134", "4"],
+        "args": ["@${workspaceFolder}/cli/debug-params.rsp"],
         "cwd": "${workspaceFolder}",
         "stopAtEntry": false,
         "console": "internalConsole",
