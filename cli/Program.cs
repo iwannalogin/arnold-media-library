@@ -11,7 +11,7 @@ services.AddSingleton<LibraryManager>();
 services.AddFormattingServices();
 
 var commandFactory = new CommandFactory(services.BuildServiceProvider());
-var rootCommand = commandFactory.CreateCommand( RootRouting.RootHandler );
+var rootCommand = commandFactory.CreateCommand( RootRouting.RootHandler, true );
 
 var parseResult = rootCommand.Parse( args );
 await parseResult.InvokeAsync();

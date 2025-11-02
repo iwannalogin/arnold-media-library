@@ -1,5 +1,6 @@
 using System.Collections;
 using System.CommandLine;
+using System.CommandLine.Help;
 using System.Reflection;
 using arnold.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,10 +8,17 @@ using Microsoft.Extensions.DependencyInjection;
 namespace arnold.Utilities;
 
 public class CommandFactory( IServiceProvider serviceProvider ) {
-    public Command CreateCommand( CommandDefinition definition ) {
+    public Command CreateCommand( CommandDefinition definition, bool isRoot = true ) {
         var arguments = SortArguments( definition.ArgumentDefinitions ?? [] );
 
-        var cmd = new Command( definition.Name.ToLower(), definition.Description );
+        var cmd = isRoot
+            ? new RootCommand( definition.Description )
+            : new Command( definition.Name.ToLower(), definition.Description );
+        if( !isRoot ) {
+            var helpOption = new HelpOption();
+            cmd.Options.Add( helpOption );
+        }
+
         AttachHandler( cmd, definition );
         
         var firstRequiredList = true;
@@ -47,14 +55,16 @@ public class CommandFactory( IServiceProvider serviceProvider ) {
         //This should be part of some sort of global configuration
         //service. Something that generates this list and maps them to an
         //IConfiguration for consumption in transients.
-        cmd.Options.Add( new Option<string[]>( "--output-format", ["-of"] ) {
-            Description = "Output format [text|json]", //TODO: Generate
-            Arity = ArgumentArity.ZeroOrMore,
-            AllowMultipleArgumentsPerToken = true
-        } );
+        if( definition.Handler is not null ) {
+            cmd.Options.Add( new Option<string[]>( "--output-format", ["-of"] ) {
+                Description = "Output format [text|json]", //TODO: Generate
+                Arity = ArgumentArity.ZeroOrMore,
+                AllowMultipleArgumentsPerToken = true
+            } );
+        }
 
         foreach( var subrouting in definition.SubCommands ?? [] ) {
-            cmd.Subcommands.Add( CreateCommand( subrouting ) );
+            cmd.Subcommands.Add( CreateCommand( subrouting, false ) );
         }
 
         return cmd;
