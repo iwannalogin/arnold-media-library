@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using arnold.Utilities;
 using Microsoft.EntityFrameworkCore;
 
 namespace arnold.Models;

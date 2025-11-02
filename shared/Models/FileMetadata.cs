@@ -10,8 +10,8 @@ public class FileMetadata {
     public string Name { get; set; } = string.Empty;
     public string Label { get; set; } = string.Empty;
 
-    public virtual List<FileTag> Tags { get; set; } = new List<FileTag>();
-    public virtual List<FileAttribute> Attributes { get; set; } = new List<FileAttribute>();
+    public virtual List<FileTag> Tags { get; set; } = [];
+    public virtual List<FileAttribute> Attributes { get; set; } = [];
 
     public bool ContainsTag( string tag ) {
         var testTag = tag.ToLower();
@@ -21,6 +21,8 @@ public class FileMetadata {
         return false;
     }
 
+    public override string ToString() => Name;
+
     [ModelBuilder]
     private static void OnModelCreating( ModelBuilder builder ) {
         builder.Entity<FileMetadata>()
@@ -28,9 +30,13 @@ public class FileMetadata {
             .WithOne()
             .HasForeignKey( ft => ft.FileId );
 
+        builder.Entity<FileMetadata>().Navigation( fi => fi.Tags );
+
         builder.Entity<FileMetadata>()
             .HasMany( fi => fi.Tags )
             .WithOne()
             .HasForeignKey( fa => fa.FileId );
+
+        builder.Entity<FileMetadata>().Navigation( fi => fi.Attributes );
     }
 }

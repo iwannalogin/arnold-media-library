@@ -1,5 +1,8 @@
+using System.Data;
 using arnold.Models;
 using arnold.Services;
+using arnold.Utilities;
+using Microsoft.EntityFrameworkCore;
 
 namespace arnold.Managers;
 
@@ -7,13 +10,45 @@ public class LibraryManager( ArnoldService arnoldService ) {
     public IQueryable<FileLibrary> ListLibraries()
         => arnoldService.Libraries;
 
-    public FileLibrary? GetLibrary( string libraryName ) {
-        if(string.IsNullOrWhiteSpace(libraryName)) {
-            throw new ArgumentNullException( nameof(libraryName) );
+    public FileLibrary CreateLibrary( string libraryName, string? description = null ) {
+        ArgumentMissingException.Test( nameof(libraryName), libraryName );
+        var library = GetLibrary( libraryName );
+        if( library is not null ) {
+            throw new InvalidOperationException( $"Library {libraryName} already exists." );
         }
 
+        library = arnoldService.Libraries.Add( new FileLibrary() {
+            Name = libraryName,
+            Description = description ?? "New media library"
+        } ).Entity;
+
+        arnoldService.SaveChanges();
+        return library;
+    }
+
+    public bool DeleteLibrary( string libraryName ) {
+        try {
+            return DeleteLibrary( GetLibrary(libraryName) );
+        } catch {
+            return false;
+        }
+    }
+    public bool DeleteLibrary( FileLibrary? library ) {
+        try {
+            if( library is null ) return false;
+            arnoldService.Libraries.Remove(library);
+            arnoldService.SaveChanges();
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    public FileLibrary? GetLibrary( string libraryName ) {
+        ArgumentMissingException.Test( nameof(libraryName), libraryName );
         return arnoldService
             .Libraries
+            .Include( fl => fl.Files ).Include( fl => fl.Monitors )
             .FirstOrDefault( lib => lib.Name.ToLower() == libraryName.ToLower() );
     }
 

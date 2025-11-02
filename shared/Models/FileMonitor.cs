@@ -19,6 +19,8 @@ public class FileMonitor {
     public bool IsInclusionRule { get; set; } = true;
     public bool IsExclusionRule => !IsInclusionRule;
 
+    public override string ToString() => Name;
+
     [NotMapped]
     protected Regex? RuleRegex = null;
     public bool IsMatch( string fullFileName ) {
