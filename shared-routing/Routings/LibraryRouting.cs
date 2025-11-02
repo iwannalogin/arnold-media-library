@@ -9,6 +9,9 @@ public static class LibraryRouting {
         name: "list",
         description: "List existing libraries",
         handler: static ( [FromServices] LibraryManager libraryManager )
-                => FileLibraryOverview.FromQuery( libraryManager.ListLibraries() )
+                => libraryManager.ListLibraries()
+                    .AsNoTracking()
+                    .Include( fl => fl.Files )
+                    .Include( fl => fl.Monitors )
     );
 }

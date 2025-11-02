@@ -1,25 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using arnold.Utilities;
 using Microsoft.EntityFrameworkCore;
 
 namespace arnold.Models;
-
-public class FileLibraryOverview( FileLibrary library ) {
-    public long Id => library.Id;
-    public string Name => library.Name;
-    public string Description => library.Description;
-    public long FileCount => library.Files.Count;
-    public long MonitorCount => library.Monitors.Count;
-
-    public override string ToString() => Name;
-
-    public static IEnumerable<FileLibraryOverview> FromQuery( IQueryable<FileLibrary> query )
-        => query
-            .AsNoTracking()
-            .Include( fl => fl.Files )
-            .Include( fl => fl.Monitors )
-            .Select( fl => new FileLibraryOverview(fl) );
-}
 
 public class FileLibrary {
     [Key]
