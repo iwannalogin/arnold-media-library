@@ -23,8 +23,10 @@ public class ArgumentDefinition {
             ?? parameterInfo.GetCustomAttribute<DescriptionAttribute>()?.Description
             ?? string.Empty;
         Type = argAttribute?.Type ?? InferType( parameterInfo.ParameterType );
-        Required = argAttribute?.Required
-            ?? parameterInfo.GetCustomAttribute<RequiredAttribute>() is not null;
+
+        Required = (argAttribute?.Required ?? false)
+            || parameterInfo.GetCustomAttribute<RequiredAttribute>() is not null
+            || !parameterInfo.HasDefaultValue;
         
         var aliases = new List<string> { Name };
         if( argAttribute is not null ) aliases.AddRange( argAttribute.Aliases );
@@ -34,6 +36,7 @@ public class ArgumentDefinition {
     private static ArgumentType InferType( Type type ) {
         if( type == typeof(bool) ) return ArgumentType.Flag;
         else if( type == typeof(string) ) return ArgumentType.Value;
+        else if( type.IsEnum ) return type.GetCustomAttribute<FlagsAttribute>() is null ? ArgumentType.Value : ArgumentType.List;
         else if( type.IsArray ) return ArgumentType.List;
         else if( type.IsAssignableTo( typeof(IEnumerable) ) ) return ArgumentType.List;
         throw new InvalidOperationException( $"Failed to infer ArgumentType from typeof({type})" );

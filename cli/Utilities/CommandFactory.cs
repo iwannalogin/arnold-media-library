@@ -2,6 +2,7 @@ using System.Collections;
 using System.CommandLine;
 using System.CommandLine.Help;
 using System.Reflection;
+using System.Text;
 using arnold.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -35,17 +36,17 @@ public class CommandFactory( IServiceProvider serviceProvider ) {
                     Arity = ArgumentArity.OneOrMore
                 } );
             } else if( arg.Type == ArgumentType.Value ) {
-                cmd.Options.Add( new Option<string>( arg.Name, [.. arg.Aliases] ) {
+                cmd.Options.Add( new Option<string>( GetOptionName(arg), [.. GetOptionAliases(arg)] ) {
                     Description = arg.Description,
                     Arity = ArgumentArity.ZeroOrOne
                 } );
             } else if( arg.Type == ArgumentType.List ) {
-                cmd.Options.Add( new Option<string[]>( arg.Name, [.. arg.Aliases] ) {
+                cmd.Options.Add( new Option<string[]>( GetOptionName(arg), [.. GetOptionAliases(arg)] ) {
                     Description = arg.Description,
                     Arity = ArgumentArity.ZeroOrMore
                 } );
             } else {
-                cmd.Options.Add( new Option<bool>( arg.Name, [.. arg.Aliases] ) {
+                cmd.Options.Add( new Option<bool>( GetOptionName(arg), [.. GetOptionAliases(arg)] ) {
                     Description = arg.Description,
                     Arity = ArgumentArity.ZeroOrOne
                 } );
@@ -110,16 +111,24 @@ public class CommandFactory( IServiceProvider serviceProvider ) {
                         paramList.Add( service );
                         serviceList.Add( service );
                     } else {
-                        var (isMissing, argValue) = ProcessArgument(
+                        object? argValue = null;
+                        try {
+                            argValue = parsedArgs.GetValue<object?>( paramInfo.Name! );
+                        } catch( ArgumentException ) {
+                            argValue = parsedArgs.GetValue<object?>( GetOptionName(paramInfo.Name!) );
+                        }
+
+                        bool isMissing = true;
+                        (isMissing, argValue) = ProcessArgument(
                             parameter: paramInfo,
                             definition: definition.ArgumentDefinitions.First( arg => arg.Name == paramInfo.Name ),
-                            suppliedValue: parsedArgs.GetValue<object?>( paramInfo.Name! ) );
+                            suppliedValue: argValue );
                         
                         paramList.Add(argValue);
                         if( isMissing ) missingParams.Add( paramInfo.Name! );
                     }
                 }
-                if( missingParams.Count != 0) throw new MissingArgumentsException( missingParams );
+                if( missingParams.Count != 0 ) throw new MissingArgumentsException( missingParams );
 
                 var results = definition.Handler.Method.Invoke( definition.Handler.Target, [.. paramList ] );
 
@@ -155,5 +164,37 @@ public class CommandFactory( IServiceProvider serviceProvider ) {
         } else {
             Console.WriteLine( formattingService.Print(results) );
         }
+    }
+
+    private static string GetOptionName( ArgumentDefinition definition )
+        => GetOptionName(definition.Name);
+
+    private static string GetOptionName( string name ) {
+        name = ToKebabCase(name);
+        return name.Length == 1 ? "-" + name : "--" + name;
+    }
+
+    private static IEnumerable<string> GetOptionAliases( ArgumentDefinition definition ) {
+        foreach( var alias in definition.Aliases ) {
+            var name = ToKebabCase(alias);
+            yield return name.Length == 1 ? "-" + name : "--" + name;
+        }
+    }
+
+    private static string ToKebabCase( string value ) {
+        var strBuilder = new StringBuilder(value.Length);
+        
+        byte previousState = 0; //0 = First Character, 1 = Uppercase, 2 = Lowercase
+        foreach( var c in value ) {
+            if( char.IsUpper(c) ) {
+                if( previousState == 2 ) strBuilder.Append( "-" + char.ToLower(c) );
+                else strBuilder.Append( char.ToLower(c) );
+                previousState = 1;
+            } else {
+                strBuilder.Append(c);
+                previousState = 2;
+            }
+        }
+        return strBuilder.ToString();
     }
 }
