@@ -15,6 +15,17 @@
         "stopAtEntry": false,
         "console": "internalConsole",
         "envFile": "${workspaceFolder}/.env"
+    }, {
+        "name": ".NET WebAPI Launch (api)",
+        "type": "coreclr",
+        "request": "launch",
+        "preLaunchTask": "build",
+        "program": "${workspaceFolder}/api/bin/Debug/net10.0/arnold-api.dll",
+        "args": [""],
+        "cwd": "${workspaceFolder}",
+        "stopAtEntry": false,
+        "console": "internalConsole",
+        "envFile": "${workspaceFolder}/.env"
     }
     ]
 }

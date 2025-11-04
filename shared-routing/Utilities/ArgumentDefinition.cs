@@ -24,14 +24,20 @@ public class ArgumentDefinition {
             ?? string.Empty;
         Type = argAttribute?.Type ?? InferType( parameterInfo.ParameterType );
 
-        Required = (argAttribute?.Required ?? false)
-            || parameterInfo.GetCustomAttribute<RequiredAttribute>() is not null
-            || !parameterInfo.HasDefaultValue;
+        Required = IsRequired( parameterInfo, argAttribute );
         
         var aliases = new List<string> { Name };
         if( argAttribute is not null ) aliases.AddRange( argAttribute.Aliases );
         Aliases = [.. aliases];
     }
+
+    public static bool IsRequired( ParameterInfo param )
+        => IsRequired( param, param.GetCustomAttribute<ArgumentAttribute>() );
+
+    public static bool IsRequired( ParameterInfo param, ArgumentAttribute? argAttr )
+        => (argAttr?.Required ?? false )
+            || param.GetCustomAttribute<RequiredAttribute>() is not null
+            || !param.HasDefaultValue;
 
     private static ArgumentType InferType( Type type ) {
         if( type == typeof(bool) ) return ArgumentType.Flag;
