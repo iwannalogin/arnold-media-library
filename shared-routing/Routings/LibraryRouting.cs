@@ -1,4 +1,5 @@
 using arnold.Managers;
+using arnold.Models;
 using arnold.Utilities;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,7 +39,7 @@ public static class LibraryRouting {
         handler: (
             [FromServices] LibraryManager libraryManager,
             string library,
-            string[]? tags = null, string[]? excludeTags = null,
+            string[]? tags = null, string[]? excludeTags = null, string[]? paths = null,
             SearchMode mode = SearchMode.All ) => {
             
             var fileLibrary = libraryManager.GetLibrary(library);
@@ -46,6 +47,7 @@ public static class LibraryRouting {
 
             tags = [.. (tags ?? []).Select( tag => tag.ToLower() )];
             excludeTags = [.. (excludeTags ?? []).Select( tag => tag.ToLower() )];
+            paths = [.. (paths ?? []).Select( path => path.ToLower() )];
 
             var searchQuery = libraryManager.ListMetadata(fileLibrary);
             if( tags.Length != 0 || excludeTags.Length != 0) {
@@ -64,14 +66,32 @@ public static class LibraryRouting {
                 searchQuery = searchQuery.Where( meta => excludeTags.Any( tag => meta.Tags.Any( mtag => mtag.Tag.ToLower() == tag ) ) == false );
             }
 
+            if( paths.Length != 0 && mode == SearchMode.All ) {
+                searchQuery = searchQuery.Where( meta => paths.All( path => meta.Name.ToLower().Contains(path) ) );
+            } else if( paths.Length != 0 && mode == SearchMode.Any ) {
+                searchQuery = searchQuery.Where( meta => paths.Any( path => meta.Name.ToLower().Contains(path) ) );
+            }
+
             return searchQuery.ToList();
+        }
+    );
+
+    public static CommandDefinition CleanCommand = new(
+        name: "clean", description: "Remove abandoned files from library",
+        handler: static ( [FromServices] LibraryManager libraryManager, string library ) => {
+            var fileLibrary = libraryManager.GetLibrary(library);
+            if( fileLibrary is null ) return null;
+
+            var abandonedMeta = libraryManager.ListAbandonedMetadata(fileLibrary);
+            libraryManager.DeleteMetadata(abandonedMeta);
+            return abandonedMeta;
         }
     );
 
     public static CommandDefinition LibraryHandler = new(
         name: nameof(LibraryHandler),
         description: "Manage libraries",
-        subCommands: [ ListCommand, CreateCommand, DeleteCommand, InfoCommand, SearchCommand ]
+        subCommands: [ ListCommand, CreateCommand, DeleteCommand, InfoCommand, SearchCommand, CleanCommand ]
     );
 }
 

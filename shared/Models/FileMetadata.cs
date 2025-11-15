@@ -16,9 +16,23 @@ public class FileMetadata {
     public bool ContainsTag( string tag ) {
         var testTag = tag.ToLower();
         foreach( var existingTag in Tags ) {
-            if( existingTag.Tag.ToLower() == testTag ) return true;            
+            if( existingTag.Tag.Equals(testTag, StringComparison.CurrentCultureIgnoreCase)) return true;            
         }
         return false;
+    }
+
+    public bool AddTag( string tag ) {
+        if( ContainsTag(tag) ) return false;
+        Tags.Add( new FileTag() {
+            Tag = tag
+        } );
+        return true;
+    }
+
+    public IEnumerable<bool> AddTags( params IEnumerable<string> tags ) {
+        foreach( var tag in tags ) {
+            yield return AddTag(tag);
+        }
     }
 
     public override string ToString() => Name;

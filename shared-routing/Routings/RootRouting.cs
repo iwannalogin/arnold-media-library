@@ -6,6 +6,6 @@ public static class RootRouting {
     public static CommandDefinition RootHandler = new(
         name: nameof(RootHandler),
         description: string.Empty,
-        subCommands: [ LibraryRouting.LibraryHandler ]
+        subCommands: [ LibraryRouting.LibraryHandler, Routings.TagHandler ]
     );
 }

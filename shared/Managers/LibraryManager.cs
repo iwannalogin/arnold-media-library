@@ -62,5 +62,16 @@ public class LibraryManager( ArnoldService arnoldService ) {
         => arnoldService
             .Metadata
             .Where( meta => meta.LibraryId == library.Id );
+
+    public IEnumerable<FileMetadata> ListAbandonedMetadata( FileLibrary library ) {
+        foreach( var meta in ListMetadata(library) ) {
+            if( !File.Exists(meta.Name) ) yield return meta;
+        }
+    }
+
+    public void DeleteMetadata( IEnumerable<FileMetadata> metadata ) {
+        arnoldService.Metadata.RemoveRange( metadata );
+        arnoldService.SaveChanges();
+    }
 }
             

@@ -16,16 +16,41 @@ public class MetaManager( ArnoldService arnoldService, LibraryManager libraryMan
             .FirstOrDefault( meta => meta.Name.ToLower() == fileName );
     }
 
+    public void AddTags( FileLibrary library, string[] paths, params IEnumerable<string> tags ) {
+        var files = new List<string>();
+        foreach( var path in paths ) {
+            var pathAttr = File.GetAttributes(path);
+            if( pathAttr.HasFlag( FileAttributes.Directory ) ) {
+                var dirFiles = Directory.GetFiles( path, "*", SearchOption.AllDirectories );
+                files.AddRange( dirFiles.Select( f => f.ToLower() ) );
+            } else {
+                files.Add( path.ToLower() );
+            }
+        }
+
+        var metadata = arnoldService
+            .Metadata
+            .Where( meta => meta.LibraryId == library.Id )
+            .Where( meta => files.Contains( meta.Name.ToLower() ) )
+            .Include( fi => fi.Tags );
+
+        foreach( var meta in metadata ) {
+            foreach( var tag in tags ) {
+                if( meta.ContainsTag(tag) ) continue;
+                meta.Tags.Add( new FileTag() {
+                    Tag = tag
+                } );
+            }
+            //meta.AddTags( tags );
+        }
+        arnoldService.SaveChanges();
+    }
+
     public void AddTags( string libraryName, string fileName, params IEnumerable<string> tags ) {
         var metadata = GetMetadata( libraryName, fileName );
         if( metadata is null ) throw new InvalidOperationException($"Failed to find file {fileName}");
 
-        foreach( var tag in tags ) {
-            if( metadata.ContainsTag(tag) ) continue;
-            metadata.Tags.Add( new FileTag() {
-                Tag = tag
-            });
-        }
+        metadata.AddTags( tags );
         arnoldService.SaveChanges();
     }
 
