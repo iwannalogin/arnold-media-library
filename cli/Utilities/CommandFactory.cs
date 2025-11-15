@@ -43,7 +43,8 @@ public class CommandFactory( IServiceProvider serviceProvider ) {
             } else if( arg.Type == ArgumentType.List ) {
                 cmd.Options.Add( new Option<string[]>( GetOptionName(arg), [.. GetOptionAliases(arg)] ) {
                     Description = arg.Description,
-                    Arity = ArgumentArity.ZeroOrMore
+                    Arity = ArgumentArity.ZeroOrMore,
+                    AllowMultipleArgumentsPerToken = true
                 } );
             } else {
                 cmd.Options.Add( new Option<bool>( GetOptionName(arg), [.. GetOptionAliases(arg)] ) {
