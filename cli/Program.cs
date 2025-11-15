@@ -5,9 +5,7 @@ using arnold.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
 var services = new ServiceCollection();
-services.AddDbContext<ArnoldService>();
-services.AddSingleton<LibraryManager>();
-
+services.AddArnold();
 services.AddFormattingServices();
 
 var commandFactory = new CommandFactory(services.BuildServiceProvider());
