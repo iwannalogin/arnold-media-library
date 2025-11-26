@@ -13,7 +13,7 @@ public partial class Routings {
             string[]? tags = null,
             string[]? paths = null ) => {
                 var fileLibrary = libraryManager.GetLibrary(library);
-                if( fileLibrary is null ) return null;
+                if( fileLibrary is null ) return $"Failed to find library {fileLibrary}";
 
                 metaManager.AddTags( fileLibrary, paths ?? [], tags ?? [] );
                 return string.Empty;
