@@ -88,13 +88,36 @@ public static class LibraryRouting {
         }
     );
 
+    public static CommandDefinition ListTagsCommand = new(
+        name: "list-tags", description: "List all tags used in library",
+        handler: static ( [FromServices] LibraryManager libraryManager, string library ) => {
+            var fileLibrary = libraryManager.GetLibrary(library);
+            if( fileLibrary is null ) return null;
+
+            return libraryManager.ListMetadata(fileLibrary)
+                .SelectMany( meta => meta.Tags )
+                .ToList()
+                .Select( tag => tag.Tag )
+                .GroupBy( tag => tag )
+                .Select( group => new TagSummary( group.Key, group.Count() ) );
+        }
+    );
+
     public static CommandDefinition LibraryHandler = new(
         name: nameof(LibraryHandler),
         description: "Manage libraries",
-        subCommands: [ ListCommand, CreateCommand, DeleteCommand, InfoCommand, SearchCommand, CleanCommand ]
+        subCommands: [ ListCommand, CreateCommand, DeleteCommand, InfoCommand, SearchCommand, CleanCommand, ListTagsCommand ]
     );
 }
 
 public enum SearchMode : byte {
     All, Any
+}
+
+public class TagSummary( string tag, int count ) {
+    public string Tag => tag;
+    public int Count => count;
+
+    public override string ToString()
+        => $"{tag}: {count}";
 }

@@ -3,6 +3,7 @@ using arnold.Models;
 using arnold.Services;
 using arnold.Utilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 
 namespace arnold.Managers;
 
@@ -73,5 +74,55 @@ public class LibraryManager( ArnoldService arnoldService ) {
         arnoldService.Metadata.RemoveRange( metadata );
         arnoldService.SaveChanges();
     }
+
+    public IEnumerable<FileMonitor> ListMonitors( FileLibrary library )
+        => arnoldService.Monitors.Where( monitor => monitor.LibraryId == library.Id );
+
+    public IEnumerable<FileMetadata> UpdateMetadata( string library )
+        => UpdateMetadata( GetLibrary(library)! );
+
+    public IEnumerable<FileMetadata> UpdateMetadata( FileLibrary library ) {
+        var hasNewEntries = false;
+        var monitors = ListMonitors(library);
+        foreach( var monitorGroup in monitors.GroupBy( monitor => ( monitor.Directory, monitor.Recurse ) ) ) {
+            var directory = monitorGroup.Key.Directory;
+            var recurse = monitorGroup.Key.Recurse;
+
+            foreach( var file in Directory.EnumerateFiles( directory, "*", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly ) ) {
+                var shouldAdd =
+                    monitorGroup.Any( mon => mon.IsMatch( file ) )
+                    && !arnoldService.Metadata.Any( meta => meta.LibraryId == library.Id && meta.Name.ToLower() == file.ToLower() );
+                
+                if( shouldAdd ) {
+                    yield return arnoldService.Metadata.Add( new() {
+                       Name = file,
+                       Label = Path.GetFileName(file),
+                       LibraryId = library.Id 
+                    } ).Entity;
+                    hasNewEntries = true;
+                }
+            }
+        }
+        if( hasNewEntries ) arnoldService.SaveChanges();
+    }
+
+    public FileAttributeDefinition? GetAttributeDefinition( string name )
+        => arnoldService.AttributeDefinitions
+        .FirstOrDefault( attrDef => attrDef.Name.ToLower() == name.ToLower() );
+
+    public FileAttributeDefinition DefineAttribute( string name, string description ) {
+        var attrDef = GetAttributeDefinition(name);
+        if( attrDef is null ) {
+            attrDef ??= arnoldService.AttributeDefinitions.Add( new () {
+                Name = name,
+                Description = description
+            }).Entity;
+        } else {
+            attrDef.Description = description;
+        }
+        arnoldService.SaveChanges();
+        return attrDef;
+    }
+
+
 }
-            

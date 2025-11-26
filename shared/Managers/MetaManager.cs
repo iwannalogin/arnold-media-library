@@ -13,7 +13,7 @@ public class MetaManager( ArnoldService arnoldService, LibraryManager libraryMan
 
         return arnoldService.Metadata
             .Include( fi => fi.Tags ).Include( fi => fi.Attributes )
-            .FirstOrDefault( meta => meta.Name.ToLower() == fileName );
+            .FirstOrDefault( meta => meta.Name.ToLower() == fileName.ToLower() );
     }
 
     public void AddTags( FileLibrary library, string[] paths, params IEnumerable<string> tags ) {
