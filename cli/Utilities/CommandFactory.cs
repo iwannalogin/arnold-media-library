@@ -104,6 +104,7 @@ public class CommandFactory( IServiceProvider serviceProvider ) {
             var paramList = new List<object?>();
             var missingParams = new List<string>();
             var serviceList = new List<object>();
+            var argumentDefs = definition.ArgumentDefinitions.ToList();
 
             try {
                 foreach( var paramInfo in definition.Handler.Method.GetParameters() ) {
@@ -112,17 +113,32 @@ public class CommandFactory( IServiceProvider serviceProvider ) {
                         paramList.Add( service );
                         serviceList.Add( service );
                     } else {
+                        var argDef = argumentDefs.First( arg => arg.Name == paramInfo.Name );
                         object? argValue = null;
                         try {
-                            argValue = parsedArgs.GetValue<object?>( paramInfo.Name! );
-                        } catch( ArgumentException ) {
+                            /*
+                            var isArgument =
+                                (argDef.Required && argDef.Type == ArgumentType.Value )
+                                || ( argDef.Required && argDef.Type == ArgumentType.List && firstRequiredList );
+
+                            if( isArgument ) {
+                                if( argDef.Type == ArgumentType.List ) firstRequiredList = false;
+
+                                argValue = parsedArgs.
+                            }
+                            */
+
+                            //if( argDef.Required ) argValue = parsedArgs.GetValue<object?>( paramInfo.Name! );
                             argValue = parsedArgs.GetValue<object?>( GetOptionName(paramInfo.Name!) );
+                        } catch( ArgumentException ) {
+                            //argValue = parsedArgs.GetValue<object?>( GetOptionName(paramInfo.Name!) );
+                            argValue = parsedArgs.GetValue<object?>( paramInfo.Name! );
                         }
 
                         bool isMissing = true;
                         (isMissing, argValue) = ProcessArgument(
                             parameter: paramInfo,
-                            definition: definition.ArgumentDefinitions.First( arg => arg.Name == paramInfo.Name ),
+                            definition: argumentDefs.First( arg => arg.Name == paramInfo.Name ),
                             suppliedValue: argValue );
                         
                         paramList.Add(argValue);
