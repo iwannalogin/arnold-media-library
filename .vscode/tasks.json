@@ -25,9 +25,7 @@
                 "publish",
                 "cli/arnold.csproj",
                 "-c", "Release",
-				"-p:PublishSingleFile=true",
-                "-p:DebugSymbols=false",
-                "-o", "~/Utilities"
+                "-o", "~/.local/share/arnold-media/bin"
             ],
             "group": "build",
             "presentation": {

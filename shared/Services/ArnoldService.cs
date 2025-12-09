@@ -19,7 +19,7 @@ public class ArnoldService : DbContext {
     public ArnoldService() {
         var appData = Environment.SpecialFolder.LocalApplicationData;
         var appDataPath = Environment.GetFolderPath(appData, Environment.SpecialFolderOption.Create);
-        DbPath = Path.Join( appDataPath, "Arnold Media Library", "database.db" );
+        DbPath = Path.Join( appDataPath, "arnold-media", "database.db" );
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder options) {
