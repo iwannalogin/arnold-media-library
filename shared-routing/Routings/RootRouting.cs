@@ -84,6 +84,17 @@ public static class RootRouting {
             }
     );
 
+    public static CommandDefinition UpdateProvidersHandler = new(
+        name: "update-providers",
+        description: "Run all providers",
+        handler: (
+            [FromServices] LibraryManager libraryManager,
+            string library
+        ) => {
+            libraryManager.UpdateProviders( libraryManager.GetLibrary(library)! );
+        }
+    );
+
     public static CommandDefinition RootHandler = new(
         name: nameof(RootHandler),
         description: string.Empty,
@@ -94,7 +105,9 @@ public static class RootRouting {
             UpdateHandler,
             CleanHandler,
             AddHandler,
-            ListHandler
+            ListHandler,
+            DefineAttributeHandler,
+            UpdateProvidersHandler
         ]
     );
 }

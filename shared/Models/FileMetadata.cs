@@ -35,6 +35,20 @@ public class FileMetadata {
         }
     }
 
+    public FileAttribute GetAttribute( string name )
+        => Attributes.First( attr => attr.Definition.Name.ToLower() == name.ToLower() );
+
+    public bool SetAttribute( string name, string value ) {
+        var attr = Attributes.FirstOrDefault( attr => attr.Definition.Name.ToLower() == name.ToLower() );
+        if( attr is null ) return false;
+        
+        if( attr.Value != value ) {
+            attr.Value = value;
+            return true;
+        }
+        return false;
+    }
+
     public override string ToString() => Name;
 
     [ModelBuilder]

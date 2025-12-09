@@ -8,7 +8,7 @@ public class FileAttribute {
     public long AttributeId { get; set; }
     public string Value { get; set; } = string.Empty;
 
-    public virtual FileAttributeDefinition? Definition { get; set; } = null;
+    public required virtual FileAttributeDefinition Definition { get; set; }
 
     [ModelBuilder]
     private static void OnModelCreating( ModelBuilder builder ) {
@@ -16,5 +16,9 @@ public class FileAttribute {
             .HasOne( fa => fa.Definition )
             .WithMany()
             .HasForeignKey( fa => fa.AttributeId );
+        
+        builder.Entity<FileAttribute>()
+            .Navigation( fa => fa.Definition )
+            .AutoInclude();
     }
 }

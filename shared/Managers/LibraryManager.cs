@@ -127,7 +127,7 @@ public class LibraryManager( ArnoldService arnoldService ) {
         => arnoldService.AttributeDefinitions
         .FirstOrDefault( attrDef => attrDef.Name.ToLower() == name.ToLower() );
 
-    public FileAttributeDefinition DefineAttribute( string name, string description ) {
+    public FileAttributeDefinition DefineAttribute( string name, string description, bool saveChanges = true ) {
         var attrDef = GetAttributeDefinition(name);
         if( attrDef is null ) {
             attrDef ??= arnoldService.AttributeDefinitions.Add( new () {
@@ -137,9 +137,56 @@ public class LibraryManager( ArnoldService arnoldService ) {
         } else {
             attrDef.Description = description;
         }
-        arnoldService.SaveChanges();
+        if( saveChanges ) arnoldService.SaveChanges();
         return attrDef;
     }
 
+    private static IEnumerable<IMetadataProvider> GetProviders()
+        => System.Reflection.Assembly
+            .GetCallingAssembly()
+            .GetTypes()
+            .Where( type => type.IsAssignableTo( typeof(IMetadataProvider) ) && !type.IsInterface )
+            .Select( type => (Activator.CreateInstance(type) as IMetadataProvider)! );
 
+    public void UpdateProviders( FileLibrary library )
+        => UpdateProvidersAsync(library).Wait();
+
+    private async Task UpdateProvidersAsync( FileLibrary library ) {
+        var providers = GetProviders();
+        var attrDefinitions = new List<FileAttributeDefinition>();
+        foreach( var provider in providers ) {
+            foreach( var attrDef in provider.TargetAttributes ) {
+                attrDefinitions.Add( DefineAttribute( attrDef.name, attrDef.description, false ) );
+            }
+        }
+        await arnoldService.SaveChangesAsync();
+
+        foreach( var file in ListMetadata(library) ) {
+            foreach( var attrDef in attrDefinitions ) {
+                await EnsureAttribute(file, attrDef);
+            }
+        }
+        //await arnoldService.SaveChangesAsync();
+
+        foreach( var file in ListMetadata(library) ) {
+            foreach( var provider in providers ) {
+                await Task.WhenAll(
+                    provider.AddTagsAsync(file),
+                    provider.SetAttributesAsync(file)
+                );
+            }
+        }
+        await arnoldService.SaveChangesAsync();
+    }
+
+    private async Task EnsureAttribute( FileMetadata file, FileAttributeDefinition attributeDefinition ) {
+        var attr = file.Attributes.FirstOrDefault( attr => attr.Definition.Name.ToLower() == attributeDefinition.Name.ToLower() );
+        if( attr is not null ) return;
+        arnoldService.Attributes.Add( new() {
+            FileId = file.Id,
+            AttributeId = attributeDefinition.Id,
+            Definition = attributeDefinition,
+            Value = string.Empty
+        } );
+    }
 }
