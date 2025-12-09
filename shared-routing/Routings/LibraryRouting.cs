@@ -18,7 +18,7 @@ public static class LibraryRouting {
 
     public static CommandDefinition CreateCommand = new(
         "create", "Create a new library",
-        handler: static ( [FromServices] LibraryManager libraryManager, string name, string? description )
+        handler: static ( [FromServices] LibraryManager libraryManager, string name, string description )
             => libraryManager.CreateLibrary( name, description )
     );
 
