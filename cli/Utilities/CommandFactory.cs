@@ -29,12 +29,14 @@ public class CommandFactory( IServiceProvider serviceProvider ) {
                     Description = arg.Description,
                     Arity = ArgumentArity.ExactlyOne,
                 } );
+                arg.Representation = CliRepresentation.Argument;
             } else if( arg.Required && arg.Type == ArgumentType.List && firstRequiredList ) {
                 firstRequiredList = false;
                 cmd.Arguments.Add( new Argument<string[]>( arg.Name ) {
                     Description = arg.Description,
                     Arity = ArgumentArity.OneOrMore
                 } );
+                arg.Representation = CliRepresentation.Argument;
             } else if( arg.Type == ArgumentType.Value ) {
                 cmd.Options.Add( new Option<string>( GetOptionName(arg), [.. GetOptionAliases(arg)] ) {
                     Description = arg.Description,
@@ -104,7 +106,7 @@ public class CommandFactory( IServiceProvider serviceProvider ) {
             var paramList = new List<object?>();
             var missingParams = new List<string>();
             var serviceList = new List<object>();
-            var argumentDefs = definition.ArgumentDefinitions.ToList();
+            var argumentDefs = definition.ArgumentDefinitions;
 
             try {
                 foreach( var paramInfo in definition.Handler.Method.GetParameters() ) {
@@ -114,31 +116,16 @@ public class CommandFactory( IServiceProvider serviceProvider ) {
                         serviceList.Add( service );
                     } else {
                         var argDef = argumentDefs.First( arg => arg.Name == paramInfo.Name );
-                        object? argValue = null;
-                        try {
-                            /*
-                            var isArgument =
-                                (argDef.Required && argDef.Type == ArgumentType.Value )
-                                || ( argDef.Required && argDef.Type == ArgumentType.List && firstRequiredList );
-
-                            if( isArgument ) {
-                                if( argDef.Type == ArgumentType.List ) firstRequiredList = false;
-
-                                argValue = parsedArgs.
-                            }
-                            */
-
-                            //if( argDef.Required ) argValue = parsedArgs.GetValue<object?>( paramInfo.Name! );
-                            argValue = parsedArgs.GetValue<object?>( GetOptionName(paramInfo.Name!) );
-                        } catch( ArgumentException ) {
-                            //argValue = parsedArgs.GetValue<object?>( GetOptionName(paramInfo.Name!) );
-                            argValue = parsedArgs.GetValue<object?>( paramInfo.Name! );
-                        }
+                        var argName = paramInfo.Name!;
+                        var optName = GetOptionName(paramInfo.Name!);
+                        object? argValue = argDef.Representation == CliRepresentation.Argument
+                            ? parsedArgs.GetValue<object?>( argName )
+                            : parsedArgs.GetValue<object?>( optName );
 
                         bool isMissing = true;
                         (isMissing, argValue) = ProcessArgument(
                             parameter: paramInfo,
-                            definition: argumentDefs.First( arg => arg.Name == paramInfo.Name ),
+                            definition: argDef,
                             suppliedValue: argValue );
                         
                         paramList.Add(argValue);

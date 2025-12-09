@@ -8,12 +8,15 @@ namespace arnold.Utilities;
 
 public enum ArgumentType { Flag, List, Value };
 
+public enum CliRepresentation { Argument, Option };
+
 public class ArgumentDefinition {
     public string Name { get; init; } = string.Empty;
     public string Description { get; init; } = string.Empty;
     public ArgumentType Type { get; init; } = ArgumentType.Value;
     public bool Required { get; init; } = false;
     public ImmutableArray<string> Aliases { get; init; } = [];
+    public CliRepresentation Representation { get; set; } = CliRepresentation.Option; 
 
     public ArgumentDefinition( ParameterInfo parameterInfo ) {
         var argAttribute = parameterInfo.GetCustomAttribute<ArgumentAttribute>();
