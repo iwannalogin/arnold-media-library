@@ -78,6 +78,23 @@ public class LibraryManager( ArnoldService arnoldService ) {
     public IEnumerable<FileMonitor> ListMonitors( FileLibrary library )
         => arnoldService.Monitors.Where( monitor => monitor.LibraryId == library.Id );
 
+    public FileMonitor AddMonitor( string libraryName, string name, string directory, string rule, bool isInclusion = true, bool recurse = false ) {
+        var fileLibrary = GetLibrary(libraryName);
+        if( fileLibrary is null ) throw new KeyNotFoundException($"Unable to find library \"${libraryName}\"");
+
+        var fileMonitor = arnoldService.Monitors.Add( new () {
+           LibraryId = fileLibrary.Id,
+           Library = fileLibrary,
+           Name = name,
+           Directory = directory,
+           Recurse = recurse,
+           Rule = rule,
+           IsInclusionRule = isInclusion
+        });
+        arnoldService.SaveChanges();
+        return fileMonitor.Entity;
+    }
+
     public IEnumerable<FileMetadata> UpdateMetadata( string library )
         => UpdateMetadata( GetLibrary(library)! );
 

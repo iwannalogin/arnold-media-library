@@ -24,10 +24,45 @@ public static class RootRouting {
         handler: Routings.AddTagCommand.Handler
     );
 
+    public static CommandDefinition AddLibraryHandler = new(
+        name: "library",
+        description: "Add library to database",
+        handler: LibraryRouting.CreateCommand.Handler
+    );
+
+    public static CommandDefinition AddMonitorHandler = new(
+        name: "monitor",
+        description: "Add monitor to database",
+        handler: ([FromServices] LibraryManager libraryManager, string library, string name, string directory, string rule, bool exclusionRule = false, bool recurse = false ) => {
+            return libraryManager.AddMonitor( library, name, directory, rule, !exclusionRule, recurse );
+        }
+    );
+
     public static CommandDefinition AddHandler = new(
         nameof(AddHandler),
         description: "Add new entries to database",
-        subCommands: [ AddTagHandler ]
+        subCommands: [ AddTagHandler, AddLibraryHandler, AddMonitorHandler ]
+    );
+
+    public static CommandDefinition ListLibraryHandler = new(
+        name: "libraries",
+        description: "List libraries",
+        handler: LibraryRouting.ListCommand.Handler
+    );
+
+    public static CommandDefinition ListMonitorHandler = new(
+        name: "monitors",
+        description: "List monitors for library",
+        handler: ( [FromServices] LibraryManager libraryManager, string library ) => {
+            var fileLibrary = libraryManager.GetLibrary(library);
+            return fileLibrary?.Monitors;
+        }
+    );
+
+    public static CommandDefinition ListHandler = new (
+        name: "list",
+        description: "List entries in database",
+        subCommands: [ ListLibraryHandler, ListMonitorHandler ]
     );
 
     public static CommandDefinition SetAttributeHandler = new (
@@ -52,6 +87,14 @@ public static class RootRouting {
     public static CommandDefinition RootHandler = new(
         name: nameof(RootHandler),
         description: string.Empty,
-        subCommands: [ LibraryRouting.LibraryHandler, Routings.TagHandler, MetaRouting.MetaHandler, UpdateHandler, CleanHandler, AddHandler, DefineAttributeHandler ]
+        subCommands: [
+            LibraryRouting.LibraryHandler,
+            Routings.TagHandler,
+            MetaRouting.MetaHandler,
+            UpdateHandler,
+            CleanHandler,
+            AddHandler,
+            ListHandler
+        ]
     );
 }
