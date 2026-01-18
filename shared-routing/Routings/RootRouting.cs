@@ -95,6 +95,26 @@ public static class RootRouting {
         }
     );
 
+    public static CommandDefinition RenameHandler = new(
+        name: "rename",
+        description: "Rename file",
+        handler: ( [FromServices] MetaManager metaManager, string oldFile, string newFile  ) => {
+            var newDirectory = Path.GetDirectoryName(newFile)!;
+            if( !Directory.Exists(newDirectory) ) Directory.CreateDirectory(newDirectory);
+
+            File.Move( oldFile, newFile );
+            metaManager.RenameFile( oldFile, newFile );
+        }
+    );
+
+    public static CommandDefinition RetargetDirectoryHandler = new(
+        name: "retarget-directory",
+        description: "Retarget full directory",
+        handler: ( [FromServices] MetaManager metaManager, string oldDirectory, string newDirectory ) => {
+            metaManager.RetargetDirectory( oldDirectory, newDirectory );
+        }
+    );
+
     public static CommandDefinition RootHandler = new(
         name: nameof(RootHandler),
         description: string.Empty,
@@ -107,7 +127,9 @@ public static class RootRouting {
             AddHandler,
             ListHandler,
             DefineAttributeHandler,
-            UpdateProvidersHandler
+            UpdateProvidersHandler,
+            RenameHandler,
+            RetargetDirectoryHandler
         ]
     );
 }

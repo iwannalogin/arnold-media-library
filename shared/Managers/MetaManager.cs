@@ -65,4 +65,23 @@ public class MetaManager( ArnoldService arnoldService, LibraryManager libraryMan
         }
         arnoldService.SaveChanges();
     }
+
+    public void RenameFile( string oldFileName, string newFileName ) {
+        var entries = arnoldService.Metadata.Where( meta => meta.Name == oldFileName );
+        foreach( var entry in entries ) {
+            entry.Name = newFileName;
+            entry.Label = Path.GetFileName(newFileName);
+        }
+        arnoldService.SaveChanges();
+    }
+
+    public void RetargetDirectory( string oldDirectory, string newDirectory ) {
+        if( !oldDirectory.EndsWith("/") ) oldDirectory += "/";
+        if( !newDirectory.EndsWith("/") ) newDirectory += "/";
+        var entries = arnoldService.Metadata.Where( meta => meta.Name.StartsWith(oldDirectory) );
+        foreach( var entry in entries ) {
+            entry.Name = entry.Name.Replace(oldDirectory, newDirectory);
+        }
+        arnoldService.SaveChanges();
+    }
 }
