@@ -1,8 +1,8 @@
 import { app, BrowserWindow, dialog, ipcMain, IpcMainEvent } from 'electron';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, exec, execFileSync, execSync } from 'node:child_process';
 import started from 'electron-squirrel-startup';
-import { AcceptDialogRequest, GetTagRequest, StartupParameters } from './Global';
+import { AcceptDialogRequest, GetTagRequest, InsecureExecRequest, OpenFileRequest, RenameFileRequest, SearchLibraryRequest, StartupParameters } from './electron-api';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { lstatSync, existsSync } from 'node:fs';
@@ -20,6 +20,7 @@ const createWindow = () => {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
+    icon: path.join(__dirname, 'arnold.png')
   });
 
   // and load the index.html of the app.
@@ -30,9 +31,6 @@ const createWindow = () => {
       path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
     );
   }
-
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
 };
 
 function forceArray( val: any ): string[] {
@@ -86,6 +84,37 @@ async function getTags({ library, path }: GetTagRequest ) {
   return accumulator.split('\n').filter( tag => !!tag );
 }
 
+async function searchLibrary({ library, tags, paths }: SearchLibraryRequest) {
+  const argList = ['library', 'search', library];
+  if( tags ) argList.push( '--tags', ...tags );
+  if( paths ) argList.push( '--paths', ...paths );
+
+  const arnold = spawn('arnold', argList );
+
+  let accumulator = '';
+  for await ( const chunk of arnold.stdout ) {
+    accumulator += chunk.toString();
+  }
+  return accumulator.split('\n').filter( line => !!line );
+}
+
+async function renameFile({oldName, newName}: RenameFileRequest) {
+  const arnold = spawn('arnold', ['rename', oldName, newName] );
+
+  let accumulator = '';
+  for await ( const chunk of arnold.stdout ) {
+    accumulator += chunk.toString();
+  }
+
+  console.log('OUT\r\n' + accumulator);accumulator = '';
+
+  for await ( const chunk of arnold.stderr ) {
+    accumulator += chunk.toString();
+  }
+
+  console.log('ERR\r\n' + accumulator);
+}
+
 async function selectFiles() {
   return (await dialog.showOpenDialog({
     properties: ['openFile', 'multiSelections']
@@ -108,17 +137,41 @@ async function acceptDialog({ library, tags, paths, exit }: AcceptDialogRequest 
   if( exit ) app.quit();
 }
 
+function openFile({ application, file }: OpenFileRequest ) {
+  console.log({application, file});
+  if( !application ) application = 'xdg-open';
+  if( application ) {
+    execSync(`"${application}" "${file}"` );
+  } else {
+    execSync( `"${file}"` );
+  }
+}
+
+async function insecureExec({command, args}: InsecureExecRequest) {
+  const app = spawn(command, args);
+
+  let accumulator = '';
+  for await ( const chunk of app.stdout ) {
+    accumulator += chunk.toString();
+  }
+  return accumulator.split('\n').filter( tag => !!tag );
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', ()=> {
   ipcMain.handle('get-startup', getStartupParameters );
   ipcMain.handle('get-libraries', getLibraries );
+  ipcMain.handle('search-library', (_, params) => searchLibrary(params) );
   ipcMain.handle('select-files', selectFiles );
   ipcMain.handle('select-directories', selectDirectories);
   ipcMain.handle('cancel-dialog', cancelDialog);
-  ipcMain.handle('accept-dialog', (ev, params) => acceptDialog(params) );
-  ipcMain.handle('get-tags', (ev, params) => getTags(params));
+  ipcMain.handle('accept-dialog', (_, params) => acceptDialog(params) );
+  ipcMain.handle('get-tags', (_, params) => getTags(params));
+  ipcMain.handle('rename-file', (_, params) => renameFile(params));
+  ipcMain.handle('open-file', (_, params) => openFile(params) );
+  ipcMain.handle('insecure-exec', (_,params) => insecureExec(params) );
   createWindow();
 });
 
