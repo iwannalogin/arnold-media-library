@@ -11,6 +11,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "arnold-api", "api\arnold-ap
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "arnold-routing", "shared-routing\arnold-routing.csproj", "{B9AD5812-527E-4C37-905B-9360CD36BFFC}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "arnold-tests", "tests\arnold-tests\arnold-tests.csproj", "{1E66A686-C3C2-4170-AE93-7748E1E39719}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shared", "shared", "{4F52FD11-658E-A102-6CD3-7D7C16FFA15B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,11 +75,24 @@ Global
 		{B9AD5812-527E-4C37-905B-9360CD36BFFC}.Release|x64.Build.0 = Release|Any CPU
 		{B9AD5812-527E-4C37-905B-9360CD36BFFC}.Release|x86.ActiveCfg = Release|Any CPU
 		{B9AD5812-527E-4C37-905B-9360CD36BFFC}.Release|x86.Build.0 = Release|Any CPU
+		{1E66A686-C3C2-4170-AE93-7748E1E39719}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E66A686-C3C2-4170-AE93-7748E1E39719}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E66A686-C3C2-4170-AE93-7748E1E39719}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1E66A686-C3C2-4170-AE93-7748E1E39719}.Debug|x64.Build.0 = Debug|Any CPU
+		{1E66A686-C3C2-4170-AE93-7748E1E39719}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1E66A686-C3C2-4170-AE93-7748E1E39719}.Debug|x86.Build.0 = Debug|Any CPU
+		{1E66A686-C3C2-4170-AE93-7748E1E39719}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E66A686-C3C2-4170-AE93-7748E1E39719}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E66A686-C3C2-4170-AE93-7748E1E39719}.Release|x64.ActiveCfg = Release|Any CPU
+		{1E66A686-C3C2-4170-AE93-7748E1E39719}.Release|x64.Build.0 = Release|Any CPU
+		{1E66A686-C3C2-4170-AE93-7748E1E39719}.Release|x86.ActiveCfg = Release|Any CPU
+		{1E66A686-C3C2-4170-AE93-7748E1E39719}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{1E66A686-C3C2-4170-AE93-7748E1E39719} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0ADCFAEF-06CF-488D-BC58-E0DB6010A265}

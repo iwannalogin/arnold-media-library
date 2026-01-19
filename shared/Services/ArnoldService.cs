@@ -4,12 +4,12 @@ using Microsoft.EntityFrameworkCore;
 namespace arnold;
 
 public class ArnoldService : DbContext {
-    public required DbSet<FileMetadata> Metadata { get; set; }
-    public required DbSet<FileTag> Tags { get; set; }
-    public required DbSet<FileLibrary> Libraries { get; set; }
-    public required DbSet<FileAttributeDefinition> AttributeDefinitions { get; set; }
-    public required DbSet<FileAttribute> Attributes { get; set; }
-    public required DbSet<FileMonitor> Monitors { get; set; }
+    public DbSet<FileMetadata> Metadata { get; set; } = null!;
+    public DbSet<FileTag> Tags { get; set; } = null!;
+    public DbSet<FileLibrary> Libraries { get; set; } = null!;
+    public DbSet<FileAttributeDefinition> AttributeDefinitions { get; set; } = null!;
+    public DbSet<FileAttribute> Attributes { get; set; } = null!;
+    public DbSet<FileMonitor> Monitors { get; set; } = null!;
 
     public ArnoldService() : base() {}
 
