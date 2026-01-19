@@ -2,7 +2,6 @@
 #:property PublishAot=false
 #:package Bogus@35.6.5
 
-using System.Text.RegularExpressions;
 using Bogus;
 
 string[] variousExtensions = ["jpg", "gif", "png", "jpeg", "webp", "raw", "bmp", "wbmp", "mov", "mp4", "txt", "log", "cs", "tsx", "flag", "mp3"];
@@ -22,7 +21,7 @@ var faker = new Faker {
 
 var generateFile = Directory.EnumerateFiles( Environment.CurrentDirectory, "GenerateData.cs", SearchOption.AllDirectories ).FirstOrDefault();
 if( generateFile is null ) {
-    Console.WriteLine("Run this script in the same file GenerateData.cs is in.");
+    Console.WriteLine("Run this script in the folder GenerateData.cs is in.");
     return;
 }
 
