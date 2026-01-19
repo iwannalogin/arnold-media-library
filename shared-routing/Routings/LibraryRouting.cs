@@ -14,12 +14,6 @@ public static class LibraryRouting {
                     .Include( fl => fl.Monitors )
     );
 
-    public static CommandDefinition CreateCommand = new(
-        "create", "Create a new library",
-        handler: static ( [FromServices] ArnoldManager arnold, string name, string description )
-            => arnold.AddLibrary( name, description )
-    );
-
     public static CommandDefinition DeleteCommand = new(
         "delete", "Delete existing library",
         handler: static ( [FromServices] ArnoldManager arnold, string name ) => {
@@ -114,7 +108,7 @@ public static class LibraryRouting {
     public static CommandDefinition LibraryHandler = new(
         name: nameof(LibraryHandler),
         description: "Manage libraries",
-        subCommands: [ ListCommand, CreateCommand, DeleteCommand, InfoCommand, SearchCommand, CleanCommand, ListTagsCommand ]
+        subCommands: [ ListCommand, DeleteCommand, InfoCommand, SearchCommand, CleanCommand, ListTagsCommand ]
     );
 }
 

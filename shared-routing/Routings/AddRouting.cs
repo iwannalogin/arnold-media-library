@@ -1,10 +1,29 @@
+using arnold.Models;
 using arnold.Utilities;
 
 namespace arnold.Routing;
 
-public partial class Routings {
-    public static CommandDefinition AddTagCommand = new(
-        name: "Add", description: "Add tag files or directories",
+public static class AddRouting {
+    public static CommandDefinition LibraryHandler = new(
+        nameof(LibraryHandler),
+        description: "Add library to database",
+        handler: static ( [FromServices] ArnoldManager arnold, string name, string description )
+            => arnold.AddLibrary( name, description )
+    );
+
+    public static CommandDefinition MonitorHandler = new (
+        nameof(Monitor),
+        description: "Attach monitor to library",
+        handler: AddMonitor
+    );
+    private static FileMonitor AddMonitor( [FromServices] ArnoldManager arnold, string library, string name, string directory, string rule = ".*", bool recurse = false, bool exclusion = false ) {
+        var fileLibrary = arnold.GetLibrary(library) ?? throw new InvalidOperationException($"Failed to get library \"{library}.\"");
+        return arnold.AddMonitor(fileLibrary, name, directory, rule, recurse, !exclusion );
+    }
+
+    public static CommandDefinition TagHandler = new(
+        nameof(TagHandler),
+        description: "Add tags to files or directories",
         handler: static (
             [FromServices] ArnoldManager arnold,
             string library,
@@ -34,11 +53,5 @@ public partial class Routings {
                 }
                 arnold.UpdateFiles(files);
             }
-    );
-
-    public static CommandDefinition TagHandler = new(
-        name: nameof(TagHandler),
-        description: "Tag files or directories",
-        subCommands: [ AddTagCommand ]
     );
 }

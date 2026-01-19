@@ -18,32 +18,28 @@ public static class RootRouting {
         handler: LibraryRouting.CleanCommand.Handler
     );
 
-    public static CommandDefinition AddTagHandler = new(
-        name: "tag",
-        description: "Add tag to file",
-        handler: Routings.AddTagCommand.Handler
-    );
-
-    public static CommandDefinition AddLibraryHandler = new(
-        name: "library",
-        description: "Add library to database",
-        handler: LibraryRouting.CreateCommand.Handler
-    );
-
-    public static CommandDefinition AddMonitorHandler = new(
-        name: "monitor",
-        description: "Add monitor to database",
-        handler: ([FromServices] ArnoldManager arnold, string library, string name, string directory, string rule, bool exclusionRule = false, bool recurse = false ) => {
-            var fileLibrary = arnold.GetLibrary(library);
-            if( fileLibrary is null ) throw new InvalidOperationException($"Failed to find Library \"{library}.\"");
-            return arnold.AddMonitor( fileLibrary, name, directory, rule, !exclusionRule, recurse );
-        }
-    );
-
     public static CommandDefinition AddHandler = new(
         nameof(AddHandler),
         description: "Add new entries to database",
-        subCommands: [ AddTagHandler, AddLibraryHandler, AddMonitorHandler ]
+        subCommands: [ AddRouting.TagHandler, AddRouting.LibraryHandler, AddRouting.MonitorHandler ]
+    );
+
+    public static CommandDefinition EditHandler = new(
+        nameof(EditHandler),
+        description: "Edit entries in the database",
+        subCommands: [ EditRouting.LibraryHandler ]
+    );
+
+    public static CommandDefinition RemoveHandler = new(
+        nameof(RemoveHandler),
+        description: "Remove entries from the database",
+        subCommands: [ RemoveRouting.MonitorHandler ]
+    );
+
+    public static CommandDefinition RunHandler = new(
+        nameof(RunHandler),
+        description: "Run actions",
+        subCommands: [ RunRouting.MonitorHandler ]
     );
 
     public static CommandDefinition ListLibraryHandler = new(
@@ -134,17 +130,19 @@ public static class RootRouting {
         name: nameof(RootHandler),
         description: string.Empty,
         subCommands: [
-            LibraryRouting.LibraryHandler,
-            Routings.TagHandler,
-            MetaRouting.MetaHandler,
-            UpdateHandler,
-            CleanHandler,
+            //LibraryRouting.LibraryHandler,
+            //MetaRouting.MetaHandler,
+            //UpdateHandler,
+            //CleanHandler,
             AddHandler,
-            ListHandler,
-            DefineAttributeHandler,
-            UpdateProvidersHandler,
-            RenameHandler,
-            RetargetDirectoryHandler
+            EditHandler,
+            RemoveHandler,
+            RunHandler
+            //ListHandler,
+            //DefineAttributeHandler,
+            //UpdateProvidersHandler,
+            //RenameHandler,
+            //RetargetDirectoryHandler
         ]
     );
 }
