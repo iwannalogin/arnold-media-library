@@ -14,12 +14,14 @@ public class FileInfoProvider : IMetadataProvider {
     public Task AddTagsAsync(FileMetadata file) => Task.CompletedTask;
 
     public Task SetAttributesAsync(FileMetadata file) => Task.Run( () => {
-        var fileInfo = new FileInfo( file.Name );
+        //This didn't work and needs to reimplemented anyway
 
-        file.SetAttribute("name", Path.GetFileNameWithoutExtension(file.Name));
-        file.SetAttribute("extension", Path.GetExtension( file.Name ) );
-        file.SetAttribute("size", fileInfo.Length.ToString() );
-        file.SetAttribute("updated", fileInfo.LastWriteTimeUtc.ToString("o") );
-        file.SetAttribute("created", fileInfo.CreationTimeUtc.ToString("o") );
+        //var fileInfo = new FileInfo( file.Name );
+
+        //file.SetAttribute("name", Path.GetFileNameWithoutExtension(file.Name));
+        //file.SetAttribute("extension", Path.GetExtension( file.Name ) );
+        //file.SetAttribute("size", fileInfo.Length.ToString() );
+        //file.SetAttribute("updated", fileInfo.LastWriteTimeUtc.ToString("o") );
+        //file.SetAttribute("created", fileInfo.CreationTimeUtc.ToString("o") );
     } );
 }

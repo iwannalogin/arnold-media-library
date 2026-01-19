@@ -1,5 +1,3 @@
-using arnold.Managers;
-using arnold.Models;
 using arnold.Utilities;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,8 +7,8 @@ public static class LibraryRouting {
 
     public static CommandDefinition ListCommand = new(
         "list", "List existing libraries",
-        handler: static ( [FromServices] LibraryManager libraryManager )
-                => libraryManager.ListLibraries()
+        handler: static ( [FromServices] ArnoldManager arnold )
+                => arnold.GetLibraries()
                     .AsNoTracking()
                     .Include( fl => fl.Files )
                     .Include( fl => fl.Monitors )
@@ -18,38 +16,42 @@ public static class LibraryRouting {
 
     public static CommandDefinition CreateCommand = new(
         "create", "Create a new library",
-        handler: static ( [FromServices] LibraryManager libraryManager, string name, string description )
-            => libraryManager.CreateLibrary( name, description )
+        handler: static ( [FromServices] ArnoldManager arnold, string name, string description )
+            => arnold.AddLibrary( name, description )
     );
 
     public static CommandDefinition DeleteCommand = new(
         "delete", "Delete existing library",
-        handler: static ( [FromServices] LibraryManager libraryManager, string name )
-            => libraryManager.DeleteLibrary( name )
+        handler: static ( [FromServices] ArnoldManager arnold, string name ) => {
+            var library = arnold.GetLibrary(name);
+            if( library is null ) return $"Library \"{name}\" does not exist.";
+            arnold.DeleteLibrary(library);
+            return $"Deleted \"{library.Name}.\"";
+        }
     );
 
     public static CommandDefinition InfoCommand = new(
         "info", "Get library info",
-        handler: static ( [FromServices] LibraryManager libraryManager, string name )
-            => libraryManager.GetLibrary( name )
+        handler: static ( [FromServices] ArnoldManager arnold, string name )
+            => arnold.GetLibrary( name )
     );
 
     public static CommandDefinition SearchCommand = new(
         name: "search", description: "Search libraries",
         handler: (
-            [FromServices] LibraryManager libraryManager,
+            [FromServices] ArnoldManager arnold,
             string library,
             string[]? tags = null, string[]? excludeTags = null, string[]? paths = null,
             SearchMode mode = SearchMode.All ) => {
             
-            var fileLibrary = libraryManager.GetLibrary(library);
+            var fileLibrary = arnold.GetLibrary(library);
             if( fileLibrary is null ) return null;
 
             tags = [.. (tags ?? []).Select( tag => tag.ToLower() )];
             excludeTags = [.. (excludeTags ?? []).Select( tag => tag.ToLower() )];
             paths = [.. (paths ?? []).Select( path => path.ToLower() )];
 
-            var searchQuery = libraryManager.ListMetadata(fileLibrary);
+            var searchQuery = arnold.GetFiles(fileLibrary);
             if( tags.Length != 0 || excludeTags.Length != 0) {
                 searchQuery = searchQuery.Include( meta => meta.Tags );
             }
@@ -78,23 +80,29 @@ public static class LibraryRouting {
 
     public static CommandDefinition CleanCommand = new(
         name: "clean", description: "Remove abandoned files from library",
-        handler: static ( [FromServices] LibraryManager libraryManager, string library ) => {
-            var fileLibrary = libraryManager.GetLibrary(library);
+        handler: static (
+                [FromServices] ArnoldManager arnoldManager,
+                string library ) => {
+            var fileLibrary = arnoldManager.GetLibrary(library);
             if( fileLibrary is null ) return null;
 
-            var abandonedMeta = libraryManager.ListAbandonedMetadata(fileLibrary);
-            libraryManager.DeleteMetadata(abandonedMeta);
+            var abandonedMeta = arnoldManager
+                .GetFiles(fileLibrary)
+                .AsEnumerable()
+                .Where( file => !File.Exists(file.Name) );
+            
+            arnoldManager.DeleteFiles(abandonedMeta);
             return abandonedMeta;
         }
     );
 
     public static CommandDefinition ListTagsCommand = new(
         name: "list-tags", description: "List all tags used in library",
-        handler: static ( [FromServices] LibraryManager libraryManager, string library ) => {
-            var fileLibrary = libraryManager.GetLibrary(library);
+        handler: static ( [FromServices] ArnoldManager arnold, string library ) => {
+            var fileLibrary = arnold.GetLibrary(library);
             if( fileLibrary is null ) return null;
 
-            return libraryManager.ListMetadata(fileLibrary)
+            return arnold.GetFiles(fileLibrary)
                 .SelectMany( meta => meta.Tags )
                 .ToList()
                 .Select( tag => tag.Tag )
