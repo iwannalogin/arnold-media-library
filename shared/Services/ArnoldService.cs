@@ -1,10 +1,7 @@
 using arnold.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using System.Text;
 
-namespace arnold.Services;
+namespace arnold;
 
 public class ArnoldService : DbContext {
     public required DbSet<FileMetadata> Metadata { get; set; }
@@ -14,20 +11,38 @@ public class ArnoldService : DbContext {
     public required DbSet<FileAttribute> Attributes { get; set; }
     public required DbSet<FileMonitor> Monitors { get; set; }
 
-    public string DbPath { get; private set; }
+    public ArnoldService() : base() {}
 
-    public ArnoldService() {
+    public ArnoldService( DbContextOptions options ): base(options) {}
+
+    public static string GetDefaultDatabase() {
         var appData = Environment.SpecialFolder.LocalApplicationData;
         var appDataPath = Environment.GetFolderPath(appData, Environment.SpecialFolderOption.Create);
-        DbPath = Path.Join( appDataPath, "arnold-media", "database.db" );
+        return Path.Join( appDataPath, "arnold-media", "database.db");
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder options) {
-        var directory = Path.GetDirectoryName(DbPath);
-        if( directory is not null && !Directory.Exists(directory) ) {
-            Directory.CreateDirectory(directory);
+        if( !options.IsConfigured ) {
+            var dbPath = GetDefaultDatabase();
+            var directory = Path.GetDirectoryName(dbPath);
+            if( directory is not null && !Directory.Exists(directory) ) {
+                Directory.CreateDirectory(directory);
+            }
+            options.UseSqlite($"Data Source={dbPath}");
         }
-        options.UseSqlite($"Data Source={DbPath}");
+    }
+
+    private static readonly Lock initializerLock = new();
+    private static bool hasInitialized = false;
+    public void Initialize() {
+        if( hasInitialized ) return;
+
+        lock(initializerLock) {
+            if( !hasInitialized ) {
+                Database.Migrate();
+                hasInitialized = true;   
+            }
+        }
     }
 
     protected override void OnModelCreating( ModelBuilder builder ) {

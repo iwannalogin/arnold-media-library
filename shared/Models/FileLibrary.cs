@@ -7,7 +7,7 @@ namespace arnold.Models;
 public class FileLibrary {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public long Id { get; init; } = -1;
+    public long Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
 

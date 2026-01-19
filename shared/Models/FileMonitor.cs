@@ -11,7 +11,7 @@ public class FileMonitor {
     public long Id { get; set; }
     public long LibraryId { get; set; }
     public string Name { get; set; } = string.Empty;
-    public virtual FileLibrary Library { get; set; } = new FileLibrary();
+    public virtual FileLibrary Library { get; set; } = null!;
     public string Directory { get; set; } = string.Empty;
     public bool Recurse { get; set; }
     public string Rule { get; set; } = "*";

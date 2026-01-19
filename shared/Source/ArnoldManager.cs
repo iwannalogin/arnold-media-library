@@ -5,7 +5,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace arnold;
 
-public class ArnoldManager( ArnoldService arnold ) {
+public class ArnoldManager {
+
+    protected ArnoldService arnold;
+
+    public ArnoldManager( ArnoldService arnold ) {
+        this.arnold = arnold;
+        arnold.Initialize();
+    }
 
 #region Library CRUD
     /// <summary>
@@ -13,8 +20,7 @@ public class ArnoldManager( ArnoldService arnold ) {
     /// </summary>
     /// <returns>An IQueryable of all FileLibraries</returns>
     public IQueryable<FileLibrary> GetLibraries()
-        => arnold.Libraries
-            .AsNoTracking();
+        => arnold.Libraries;
 
     /// <summary>
     /// Get a FileLibrary by its Name
@@ -24,7 +30,6 @@ public class ArnoldManager( ArnoldService arnold ) {
     public FileLibrary? GetLibrary( string libraryName ) {
         if( string.IsNullOrWhiteSpace(libraryName ) ) return null;
         return arnold.Libraries
-            .AsNoTracking()
             .FirstOrDefault( lib => lib.Name.ToLower() == libraryName.ToLower() );
     }
 
@@ -42,10 +47,10 @@ public class ArnoldManager( ArnoldService arnold ) {
             throw new InvalidOperationException($"Library \"{libraryName}\" already exists.");
         }
 
-        var library = arnold.Libraries.Add( new FileLibrary() {
+        var library = arnold.Add( new FileLibrary {
             Name = libraryName,
             Description = description ?? "New media library"
-        }).Entity;
+        } ).Entity;
 
         arnold.SaveChanges();
         return library;
@@ -110,14 +115,15 @@ public class ArnoldManager( ArnoldService arnold ) {
     /// <param name="isInclusion">Include files that match this rule, or exclude files that don't match</param>
     /// <returns>The new FileMonitor</returns>
     /// <exception cref="InvalidOperationException">A monitor with the same name associated with the provided library already exists</exception>
-    public FileMonitor AddMonitor( FileLibrary library, string monitorName, string directory, string rule, bool recurse = false, bool isInclusion = true ) {
+    public FileMonitor AddMonitor( FileLibrary library, string monitorName, string directory, string rule = ".*", bool recurse = false, bool isInclusion = true ) {
         if( arnold.Monitors.Any( mon => mon.LibraryId == library.Id && mon.Name.ToLower() == monitorName ) ) {
             throw new InvalidOperationException($"A monitor named \"{monitorName}\" for library \"{library.Name}.\"");
         }
 
-        var monitor = arnold.Monitors.Add(new FileMonitor() {
+        var monitor = arnold.Monitors.Add(new FileMonitor {
             LibraryId = library.Id,
-            Name = library.Name,
+            Library = library,
+            Name = monitorName,
             Directory = directory,
             Rule = rule,
             Recurse = recurse,
@@ -199,9 +205,8 @@ public class ArnoldManager( ArnoldService arnold ) {
 
 #region Common Actions
     public IEnumerable<FileMetadata> RunMonitors( FileLibrary library ) {
-        var hasNewEntries = false;
-        var monitors = GetMonitors(library).AsEnumerable();
-        foreach( var monitorGroup in monitors.GroupBy( monitor => ( monitor.Directory, monitor.Recurse ) ) ) {
+        var results = new List<FileMetadata>();
+        foreach( var monitorGroup in GetMonitors(library).AsEnumerable().GroupBy( mon => ( mon.Directory, mon.Recurse ) ) ) {
             var directory = monitorGroup.Key.Directory;
             var recurse = monitorGroup.Key.Recurse;
 
@@ -211,16 +216,20 @@ public class ArnoldManager( ArnoldService arnold ) {
                     && !arnold.Metadata.Any( meta => meta.LibraryId == library.Id && meta.Name.ToLower() == file.ToLower() );
                 
                 if( shouldAdd ) {
-                    yield return arnold.Metadata.Add( new() {
+                    results.Add( new() {
                        Name = file,
                        Label = Path.GetFileName(file),
-                       LibraryId = library.Id 
-                    } ).Entity;
-                    hasNewEntries = true;
+                       LibraryId = library.Id,
+                       Library = library
+                    } );
                 }
             }
         }
-        if( hasNewEntries ) arnold.SaveChanges();
+        if( results.Any() ) {
+            arnold.Metadata.AddRange(results);
+            arnold.SaveChanges();
+        }
+        return results;
     }
 
     public void RunProviders( FileLibrary library ) {

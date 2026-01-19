@@ -1,12 +1,15 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace arnold.Models;
 
 public class FileMetadata {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public long Id { get; set; }
     public long LibraryId { get; set; }
+    public virtual FileLibrary Library { get; set; } = null!;
     public string Name { get; set; } = string.Empty;
     public string Label { get; set; } = string.Empty;
 
@@ -69,5 +72,10 @@ public class FileMetadata {
             .HasForeignKey( fa => fa.FileId );
 
         builder.Entity<FileMetadata>().Navigation( fi => fi.Attributes );
+
+        builder.Entity<FileMetadata>()
+            .HasOne( fi => fi.Library )
+            .WithMany( fl => fl.Files )
+            .HasForeignKey( fi => fi.LibraryId );
     }
 }
